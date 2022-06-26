@@ -23,7 +23,7 @@ async function scrapeLatest(symbol, page) {
         });
         return obj;
       });
-      return {symbol,...data}
+      return {'_id':symbol,...data}
     } catch (error) {
       console.error(symbol, "incomeStatement", error);
     }
