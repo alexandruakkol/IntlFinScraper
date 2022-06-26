@@ -21,14 +21,14 @@ async function scrapeIncomeStatement(symbol, page) {
   try {
     await page.goto(url, { waitUntil: "networkidle0" });
     const data = await page.evaluate(() => {
-        let row=[];
-        let result=[];
+        let results=[];
+        let obj={};
         const root = document.querySelector("#__next > div > main > div.w-full.mt-5.sm\\:px-5.md\\:px-20.lg\\:px-30.xl\\:px-30 > div > div > div > div.flex-col.overflow-x-auto");
         root.childNodes.forEach(financial => {
-            row.push(financial.childNodes[0].childNodes[0].innerHTML)
-            result = row
+            obj[financial.childNodes[0].childNodes[0].innerHTML]=4
+            results.push(obj)
         })
-        return result;
+        return results;
     });
     console.log(data);
   } catch (error) {
