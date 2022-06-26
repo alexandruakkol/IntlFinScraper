@@ -27,9 +27,14 @@ async function scrapeIncomeStatement(symbol, page) {
       );
       root.childNodes.forEach((financial) => {
         varname = financial.childNodes[0].childNodes[0].innerHTML;
-        if (varname === "Revenue") {
-          obj[varname] = financial.childNodes[2].childNodes[financial.childNodes[2].childNodes.length-1].textContent;
-          results.push(obj);
+        if (financial.childElementCount === 3) {
+
+            obj[varname] =
+              financial.childNodes[2].childNodes[
+                financial.childNodes[2].childNodes.length - 1
+              ].textContent;
+            results.push(obj);
+        
         }
       });
       return results;
