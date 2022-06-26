@@ -6,7 +6,6 @@ async function scrapeLatest(symbol, page) {
     try {
       await page.goto(url, { waitUntil: "networkidle0" });
       const data = await page.evaluate(() => {
-        let results = [];
         let obj = {};
         let varname;
         const root = document.querySelector(
@@ -20,13 +19,11 @@ async function scrapeLatest(symbol, page) {
                 financial.childNodes[2].childNodes[
                   financial.childNodes[2].childNodes.length - 1
                 ].textContent;
-              results.push(obj);
-          
           }
         });
-        return results;
+        return obj;
       });
-      console.log(data);
+      return {symbol,...data}
     } catch (error) {
       console.error(symbol, "incomeStatement", error);
     }
