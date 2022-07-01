@@ -29,22 +29,18 @@ function writeToDb(obj) {
   });
 }
 
-async function existsInDb(symbol) {
+async function checkIfExists(symbol) {
   let out = {};
   client.connect(async (err) => {
-    
     try {
-    console.log('checkingdbcom')
     out = await collection.findOne({ _id: symbol });
-    console.log(out)
-      
+    if(out)out=1;
+    else out=0
     } finally {
       await client.close();
-      console.log(out);
-      sendResult(symbol, out);
     }
   });
-  client.close();
+  //client.close();
 }
 
-module.exports = writeToDb;
+module.exports = {writeToDb, checkIfExists};
