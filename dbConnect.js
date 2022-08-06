@@ -1,5 +1,4 @@
 const dotenv = require("dotenv");
-const { builtinModules } = require("module");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
 dotenv.config();
@@ -18,7 +17,7 @@ function writeToDb(obj) {
     console.log("MongoDB connection ok.");
     try {
       await collection.deleteOne({ _id: obj._id });
-      const result = await collection.insertOne(obj);
+      const result = await collection.insertOne(obj).then;
       console.log(`${obj._id} was inserted into the database.`);
     } catch (error) {
       console.log(error, err);
@@ -31,16 +30,17 @@ function writeToDb(obj) {
 
 async function checkIfExists(symbol) {
   let out = {};
-  client.connect(async (err) => {
+  client.connect(async (err, db) => {
     try {
     out = await collection.findOne({ _id: symbol });
+    _db  = client.db('test_db');
     if(out)out=1;
     else out=0
     } finally {
       await client.close();
     }
   });
-  //client.close();
+  client.close();
 }
 
 module.exports = {writeToDb, checkIfExists};
