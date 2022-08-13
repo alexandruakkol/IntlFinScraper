@@ -1,32 +1,41 @@
 const { builtinModules } = require("module");
+const puppeteer = require("puppeteer");
 
 async function scrapeLatest(symbol, page) {
-    let url = `https://roic.ai/financials/${symbol}`;
-  
-    try {
-      await page.goto(url, { waitUntil: "networkidle0" });
-      const data = await page.evaluate(() => {
-        let obj = {};
-        let varname;
-        const root = document.querySelector(
-          "#__next > div > main > div.w-full.mt-5.sm\\:px-5.md\\:px-20.lg\\:px-30.xl\\:px-30 > div > div > div > div.flex-col.overflow-x-auto"
-        );
-        root.childNodes.forEach((financial) => {
-          varname = financial.childNodes[0].childNodes[0].innerHTML;
-          if (financial.childElementCount === 3) {
-  
-              obj[varname] =
-                financial.childNodes[2].childNodes[
-                  financial.childNodes[2].childNodes.length - 1
-                ].textContent;
-          }
-        });
-        return obj;
-      });
-      return {'_id':symbol,...data}
-    } catch (error) {
-      console.error(symbol, "incomeStatement", error);
-    }
-  }
+  let url = `https://seekingalpha.com/symbol/${symbol}/balance-sheet`;
 
-module.exports=scrapeLatest;
+  try {
+    await page.goto(url, { waitUntil: "networkidle0" });
+    const data = await page.evaluate(() => {
+      let obj = {};
+      let varname;
+      const root = document.querySelector(
+        "#content > div > div.gB.bgA.bgR.bgU > div > div > div:nth-child(3) > div > div > section > div > div.gqM > div:nth-child(2) > div.jaA.jaF.bugA.bhGN > div > table > tbody"
+      );
+      console.log(root.textContent);
+      root.childNodes.forEach((financial) => {
+        console.log(financial.textContent);
+        if (!financial.childNodes[0].innerHTML) return;
+        varname = financial.childNodes[0].innerHTML;
+        obj[varname] =
+          financial.childNodes[financial.childNodes.length - 1].textContent;
+      });
+      console.log(obj);
+      return obj;
+    });
+    return { _id: symbol, ...data };
+  } catch (error) {
+    console.error(symbol, "incomeStatement", error);
+  }
+}
+
+//TESTING
+(async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  return { page, browser };
+})().then(async (init) => {
+  scrapeLatest("AAPL", init.page);
+});
+
+module.exports = scrapeLatest;

@@ -17,7 +17,7 @@ function compute(incomingData) {
   const {"Interest Expense": interestExpense,
 "Total Current Assets":currentAssets,
 "Total Liabilities":totalLiabilities,
-""
+
 }
 
   
