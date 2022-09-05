@@ -14,8 +14,6 @@ async function scrapeLatest(symbol, page) {
             let key = financial.childNodes[1].textContent;
             obj[key]= financial.childNodes[3].textContent}
         })
-        
-        console.log(obj);
         return obj;
       })
       return data;
@@ -26,11 +24,11 @@ async function scrapeLatest(symbol, page) {
 
   //TESTING
 (async () => {
-  const browser = await puppeteer.launch({ headless: false,});
+  const browser = await puppeteer.launch({ headless: true,});
   const page = await browser.newPage();
   return { page, browser };
 })().then(async (init) => {
-  scrapeLatest("AAPL", init.page);
+  scrapeLatest("AAPL", init.page).then(r=>console.log(r))
 });
 
 
