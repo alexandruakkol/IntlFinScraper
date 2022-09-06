@@ -1,18 +1,24 @@
 function compute(data){
-  let mcap = 'N/A', roe='N/A', pe='N/A', ebitdaMg= 'N/A', de = 'N/A', interestRate='N/A'
+  let mcap = 'N/A', netNet='N/A', roe='N/A', pe='N/A', roce='N/A', de = 'N/A', interestRate='N/A'
 
-  const currentAssets = data['Total Current Assets']
-      ,totalLiabilities=data['Total Liabilities']
-      ,shares=data['Diluted Shares Outstanding']
+  const currentAssets = 
+    data['Total Current Assets']
+    ,totalLiabilities=data['Total Liabilities']
+    ,currentLiabilities=data['Total Current Liabilities']
+    ,totalAssets=data['Total Assets']
+    ,shares=data['Diluted Shares Outstanding']
     ,price=data['Price']
-    netIncome=data['Net Income']
-  , totalStockEquity=data[`Total Shareholders' Equity`]
+    ,netIncome=data['Net Income']
+    ,totalStockEquity=data[`Total Shareholders' Equity`]
     ,dividend=data['']
     ,ebitda=data['EBITDA']
     ,revenues=data['Sales/Revenue']
-  , interestExpense=data['Interest Expense']
+    ,interestExpense=data['Interest Expense']
     ,longtermLiabilities=data['Long-Term Debt']
+    ,DA=data['Depreciation & Amortization Expense']
+    ;
 
+    //netnet
     if (currentAssets && totalLiabilities && shares && price) {
         netNet = (price / ((currentAssets - totalLiabilities) / shares)).toFixed(2);
       }
@@ -24,17 +30,12 @@ function compute(data){
 
     //roe
     if (totalStockEquity && netIncome) {
-      roe = (netIncome / totalStockEquity).toFixed(2);
+      roe = ((netIncome * 4) / totalStockEquity).toFixed(2);
     }
 
     //pe
     if (mcap && netIncome) {
-      pe = (mcap / netIncome).toFixed(2);
-    }
-
-    //ebitdaMg
-    if (ebitda && revenues) {
-      ebitdaMg = (ebitda / revenues).toFixed(2);
+      pe = (mcap / (netIncome * 4)).toFixed(2);
     }
 
     //de
@@ -44,10 +45,15 @@ function compute(data){
 
     //interestRate
     if (interestExpense && longtermLiabilities) {
-      interestRate = (interestExpense / longtermLiabilities).toFixed(2);
+      interestRate = ((interestExpense * 4) / longtermLiabilities).toFixed(2);
     }
 
-    data = {...data, mcap, roe, pe, ebitdaMg, de, interestRate }
+    //roce
+    if (totalAssets && currentLiabilities) {
+      roce = ((ebitda-DA)/(totalAssets-currentLiabilities)).toFixed(2);
+    }
+
+    data = {...data, mcap, netNet, roe, roce, pe, de, interestRate }
     console.log(data)
     return data;
 }
