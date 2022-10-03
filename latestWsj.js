@@ -84,7 +84,7 @@ async function makeBrowser(){
 }
 
 makeBrowser().then(async (init) => {
-  scrapeLatest("AAPL", init.page).then(r=>{
+  scrapeLatest("ccj", init.page).then(r=>{
    if(r!='error')compute(r); 
    init.browser.close();
   })

@@ -50,7 +50,7 @@ function compute(data){
 
     //roce
     if (totalAssets && currentLiabilities) {
-      roce = ((ebitda-DA)/(totalAssets-currentLiabilities)).toFixed(2);
+      roce = (((ebitda-DA))*4/(totalAssets-currentLiabilities)).toFixed(2);
     }
 
     data = {...data, mcap, netNet, roe, roce, pe, de, interestRate }
