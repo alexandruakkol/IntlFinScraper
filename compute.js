@@ -1,8 +1,8 @@
 function compute(data){
   let mcap = 'N/A', netNet='N/A', roe='N/A', pe='N/A', roce='N/A', de = 'N/A', interestRate='N/A'
 
-  const currentAssets = 
-    data['Total Current Assets']
+  const 
+    currentAssets = data['Total Current Assets']
     ,totalLiabilities=data['Total Liabilities']
     ,currentLiabilities=data['Total Current Liabilities']
     ,totalAssets=data['Total Assets']
@@ -54,7 +54,6 @@ function compute(data){
     }
 
     data = {...data, mcap, netNet, roe, roce, pe, de, interestRate }
-    console.log(data)
     return data;
 }
 module.exports = compute;
