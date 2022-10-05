@@ -91,7 +91,7 @@ async function scrapeLatest(symbol, page) {
       return obj;
     });
 
-    return { ...balanceSheet, ...incomeStatement, ...{ date: new Date() } };
+    return { ...balanceSheet, ...incomeStatement, ...{ date: new Date().toLocaleDateString('en-US') } };
   } catch (error) {
     console.log(symbol, error);
   }

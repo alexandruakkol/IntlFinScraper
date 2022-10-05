@@ -1,24 +1,18 @@
-const { Pool, Client } = require('pg')
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'finDat',
-  password: 'postgres',
-  port: 5432,
-})
-pool.query('SELECT NOW()', (err, res) => {
-  console.log(err, res)
-  pool.end()
-})
+const { Client } = require('pg')
+require('dotenv').config();
+const {user, host, database, password, port} = process.env
 const client = new Client({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'finDat',
-  password: 'postgres',
-  port: 5432,
-})
+  user
+  ,host
+  ,database
+  ,password
+  ,port
+}) 
 client.connect()
-client.query('SELECT NOW()', (err, res) => {
-  console.log(err, res)
+
+client.query('INSERT INTO data values(45)', (err, res) => {
+  console.log(res.rows[0])
   client.end()
 })
+
+//module.exports=insertRow;

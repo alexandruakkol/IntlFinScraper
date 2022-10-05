@@ -1,5 +1,5 @@
 function compute(data){
-  let mcap = 'N/A', netNet='N/A', roe='N/A', pe='N/A', roce='N/A', de = 'N/A', interestRate='N/A'
+  let mcap = 'N/A', ncavpspPct='N/A', ncavpspPct_fixed='N/A', roePct='N/A', pe='N/A', roce='N/A', dePct = 'N/A', interestRatePct='N/A'
 
   const 
     currentAssets = data['Total Current Assets']
@@ -18,19 +18,26 @@ function compute(data){
     ,DA=data['Depreciation & Amortization Expense']
     ;
 
-    //netnet
+    //ncavpspPct
     if (currentAssets && totalLiabilities && shares && price) {
-        netNet = (price / ((currentAssets - totalLiabilities) / shares)).toFixed(2);
+        ncavpspPct = (((currentAssets - totalLiabilities) / shares)/price).toFixed(2);
       }
+
+    //ncavpspPct_fixed (includes fixed assets, adjusted)
+    if (currentAssets && totalAssets && totalLiabilities && shares && price) {
+      const ltAssets = totalAssets - currentAssets;
+      const adjAssets = currentAssets + (0.33*ltAssets);
+      ncavpspPct_fixed = (((adjAssets - totalLiabilities) / shares)/price).toFixed(2);
+    }
 
     //MCap
     if (price && shares) {
       mcap = price * shares;
     }
 
-    //roe
+    //roePct
     if (totalStockEquity && netIncome) {
-      roe = ((netIncome * 4) / totalStockEquity).toFixed(2);
+      roePct = ((netIncome * 4) / totalStockEquity).toFixed(2);
     }
 
     //pe
@@ -38,14 +45,14 @@ function compute(data){
       pe = (mcap / (netIncome * 4)).toFixed(2);
     }
 
-    //de
+    //de (procentual)
     if (totalLiabilities && totalStockEquity) {
-      de = (totalLiabilities / totalStockEquity).toFixed(2);
+      dePct = (totalLiabilities / totalStockEquity).toFixed(2);
     }
 
-    //interestRate
+    //interestRatePct
     if (interestExpense && longtermLiabilities) {
-      interestRate = ((interestExpense * 4) / longtermLiabilities).toFixed(2);
+      interestRatePct = ((interestExpense * 4) / longtermLiabilities).toFixed(2);
     }
 
     //roce
@@ -53,7 +60,7 @@ function compute(data){
       roce = (((ebitda-DA))*4/(totalAssets-currentLiabilities)).toFixed(2);
     }
 
-    data = {...data, mcap, netNet, roe, roce, pe, de, interestRate }
+    data = {...data, mcap, ncavpspPct, ncavpspPct_fixed, roePct, roce, pe, dePct, interestRatePct }
     return data;
 }
 module.exports = compute;
