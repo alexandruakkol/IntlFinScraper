@@ -1,5 +1,18 @@
 const puppeteer = require("puppeteer");
 const compute = require("./compute");
+const insertRow = require("./postgres");
+
+const dbData = [
+  "mcap",
+  "ncavpspPct",
+  "ncavpspPct_fixed",
+  "roePct",
+  "roce",
+  "pe",
+  "dePct",
+  "interestRatePct",
+];
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -91,7 +104,11 @@ async function scrapeLatest(symbol, page) {
       return obj;
     });
 
-    return { ...balanceSheet, ...incomeStatement, ...{ date: new Date().toLocaleDateString('en-US') } };
+    return {
+      ...balanceSheet,
+      ...incomeStatement,
+      ...{ date: new Date().toLocaleDateString("en-US") },
+    };
   } catch (error) {
     console.log(symbol, error);
   }
@@ -106,21 +123,20 @@ async function makeBrowser() {
 makeBrowser().then(async (init) => {
   const symbol = "ebay";
 
-  let tryCounter=1;
-  while(tryCounter<6){
-    resp =await scrapeLatest(symbol, init.page)
-    if(resp!='error'){
-      console.log('precompute',resp)
-      try{
-        resp=compute(resp)
-      }catch(er){
-        console.log(`${symbol} computing error`)
+  let tryCounter = 1;
+  while (tryCounter < 6) {
+    resp = await scrapeLatest(symbol, init.page);
+    if (resp != "error") {
+      try {
+        resp = compute(resp);
+        insertRow(Object.entries(resp).filter(pair=>dbData.includes(pair[0])));
+      } catch (er) {
+        console.log(`${symbol} computing error, ${er}`);
       }
-      console.log('postcompute',resp);
       break;
     }
     tryCounter++;
-    console.log(`${symbol} scraping fail: try #${tryCounter}`) 
+    console.log(`${symbol} scraping fail: try #${tryCounter}`);
   }
   init.browser.close();
 });
