@@ -11,11 +11,13 @@ const client = new Client({
 client.connect()
 
 function insertRow(data){
+  console.log('data',data)
   const keys = JSON.stringify(data.map(pair=>pair[0])).replace('[','').replace(']','').replace(/['"]+/g, '');
-  const values = JSON.stringify(data.map(pair=>pair[1])).replace('[','').replace(']','');
-  console.log('inserting keys', keys, 'values, ',values);
+  const values = JSON.stringify(data.map(pair=>isNaN(pair[1])?pair[1]:Number(pair[1]))).replace('[','').replace(']','').replaceAll(`"`,`'`);
+  console.log(`INSERT INTO data(${keys}) values(${values})`);
   client.query(`INSERT INTO data(${keys}) values(${values})`, (err, res) => {
-    console.log(res)
+    console.log(res);
+    console.log('db insert error ', err)
     client.end()
    })
 }

@@ -2,16 +2,39 @@ const puppeteer = require("puppeteer");
 const compute = require("./compute");
 const insertRow = require("./postgres");
 
-const dbData = [
-  "mcap",
-  "ncavpspPct",
-  "ncavpspPct_fixed",
-  "roePct",
-  "roce",
-  "pe",
-  "dePct",
-  "interestRatePct",
-];
+const dbData ={
+  'symbol':'symbol',
+  'date':'date',
+  'Total Current Assets':'curassets',
+  'Net Property, Plant & Equipment':'neppropertyplants',
+  'Intangible Assets':'intangibles',
+  'Total Assets':'totalassets',
+  'Price':'price',
+  'Total Current Liabilities':'currentliabilities',
+  'Quick Ratio':'quickratio',
+  'Long-Term Debt':'ltdebt',
+  'Total Liabilities':'totalliabilities',
+  "Total Shareholders' Equity":'totalshareholdequity',
+  'Total Equity':'totalequity',
+  'Cost of Goods Sold (COGS) incl. D&A':'cogsplusda',
+  'Depreciation & Amortization Expense':'depramortiz',
+  'Research & Development':'rdexpenses',
+  'Net Income':'netincome',
+  'EPS (Basic)':'eps',
+  'Basic Shares Outstanding':'sharesoutst',
+  'EBITDA':'ebitda',
+  'EBITDA Margin':'ebitdamg',
+  'Cash & Short Term Investments':'cashandst',
+  'mcap':'mcap',
+  'ncavpsppct':'ncavpsppct',
+  'ncavpsppct_fixed':'ncavpsppct_fixed',
+  'roepct':'roepct',
+  'roce':'roce',
+  'pe':'pe',
+  'depct':'depct',
+  'interestRatepct':'interestratepct'
+}
+ 
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -129,7 +152,13 @@ makeBrowser().then(async (init) => {
     if (resp != "error") {
       try {
         resp = compute(resp);
-        insertRow(Object.entries(resp).filter(pair=>dbData.includes(pair[0])));
+        resp={...resp,...{symbol}}
+        Object.entries(dbData).forEach(pair=>{ //translate keys via dbData dictionary
+          let key=pair[0], newkey=dbData[key];
+          resp[newkey]=resp[key];
+        })
+        console.log('resp',resp)
+        insertRow(Object.entries(resp).filter(pair=>Object.values(dbData).includes(pair[0])));
       } catch (er) {
         console.log(`${symbol} computing error, ${er}`);
       }
