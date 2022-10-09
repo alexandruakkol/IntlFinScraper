@@ -166,7 +166,7 @@ makeBrowser().then(async (init) => {
   //start scraping
   for (symbol of data.tickers) {
     let tryCounter = 1;
-    while (tryCounter < 6) {
+    while (tryCounter < 3) {
       resp = await scrapeLatest(symbol, init.page);
       if (resp != "error") {
         try {
@@ -193,7 +193,7 @@ makeBrowser().then(async (init) => {
         ? console.log(`--${symbol} scraping fail: try #${tryCounter}`)
         : null;
     }
-    console.log(`--${symbol} scraping fail`);
+    if (tryCounter == 3) console.log(`--${symbol} scraping fail`);
   }
   init.browser.close();
 });
