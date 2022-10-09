@@ -1,8 +1,7 @@
 const puppeteer = require("puppeteer"),
   compute = require("./compute"),
-  insertRow = require("./postgres"),
-  getTickers = require("./getAllUSTickers");
-
+  { insertRow, getTickers } = require("./postgres"),
+  getBaseTickers = require("./getAllUSTickers");
 const dbData = {
   symbol: "symbol",
   date: "date",
@@ -89,7 +88,7 @@ async function scrapeLatest(symbol, page) {
     });
 
     if (balanceSheet.error) {
-      console.log(symbol, balanceSheet.error);
+      debug ? console.log(symbol, balanceSheet.error) : null;
       return "error";
     }
     ////////IncomeStatement\\\\\\\\\\\\
@@ -129,7 +128,7 @@ async function scrapeLatest(symbol, page) {
       ...{ date: new Date().toLocaleDateString("en-US") },
     };
   } catch (error) {
-    console.log(symbol, error);
+    debug ? console.log("--", symbol, error) : null;
   }
 }
 
@@ -140,8 +139,32 @@ async function makeBrowser() {
 }
 
 makeBrowser().then(async (init) => {
-  const tickers = await getTickers();
-  for (symbol of tickers) {
+  //mode logic
+  let data = {},
+    operationStatus;
+  switch (mode) {
+    case "APPEND-ONLY":
+      data = await getTickers();
+      console.log(
+        mode,
+        "mode.",
+        "Pulling",
+        data.tickers.length,
+        "of",
+        data.baseCounter,
+        "total symbols."
+      );
+      break;
+    case "OVERWRITE":
+      data.tickers = await getBaseTickers();
+      console.log(mode, "mode.", "Pulling", data.tickers.length, "symbols.");
+      break;
+    default:
+      console.log("Wrong mode.");
+      return;
+  }
+  //start scraping
+  for (symbol of data.tickers) {
     let tryCounter = 1;
     while (tryCounter < 6) {
       resp = await scrapeLatest(symbol, init.page);
@@ -166,8 +189,11 @@ makeBrowser().then(async (init) => {
         break;
       }
       tryCounter++;
-      console.log(`${symbol} scraping fail: try #${tryCounter}`);
+      debug
+        ? console.log(`--${symbol} scraping fail: try #${tryCounter}`)
+        : null;
     }
+    console.log(`--${symbol} scraping fail`);
   }
   init.browser.close();
 });

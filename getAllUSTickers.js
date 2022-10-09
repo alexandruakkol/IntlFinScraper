@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 
-async function getTickers() {
+async function getBaseTickers() {
   var out = undefined;
   await fetch(
     "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/main/all/all_tickers.txt"
@@ -14,4 +14,4 @@ async function getTickers() {
   return out;
 }
 
-module.exports = getTickers;
+module.exports = getBaseTickers;
