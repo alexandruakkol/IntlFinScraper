@@ -1,7 +1,9 @@
 const puppeteer = require("puppeteer"),
-  compute = require("./compute"),
-  { insertRow, getTickers } = require("./postgres"),
-  getBaseTickers = require("./getAllUSTickers");
+      compute = require("./compute"),
+    { insertRow, getTickers } = require("./postgres"),
+      getBaseTickers = require("./getAllUSTickers"),
+    { scrapeLatest } = require("./scrapeLatest"),
+    { scrapeHistory } = require('./scrapeHistory')
 const dbData = {
   Cenom: "Denom",
   Currency: "Currency",
@@ -37,286 +39,13 @@ const dbData = {
   interestRatepct: "interestratepct",
 };
 
-async function scrapeLatest(Symbol, page) {Symbol='AAPL'
-  let balanceSheetURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/quarter/balance-sheet`;
-  let incomeStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/quarter/income-statement`;
-
-  try {
-    ////////Balance sheet\\\\\\\\
-
-    await page.goto(
-      balanceSheetURL,
-      { waitUntil: "domcontentloaded" },
-      { timeout: 0 }
-    );
-
-    const balanceSheet = await page.evaluate(() => {
-      const error = document.querySelector("#cr_cashflow > span");
-      if (error) return { error: "pageDown" };
-      const meta = document.querySelector(".fiscalYr").textContent.split(" ");
-      const currency = meta[meta.length - 2],
-        denom = meta[meta.length - 1].replace(".", "");
-      const time = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > thead > tr > th:nth-child(2)").textContent;
-      //assets
-      let obj = {};
-      const assetsRoot = document.querySelector(
-        "#cr_cashflow > div.expanded > div.cr_cashflow_table > table > tbody"
-      );
-
-      Array.prototype.forEach.call(assetsRoot.childNodes, (financial) => {  console.log(financial)
-        if (financial.className != "hide" && financial.nodeName != "#text") {
-          let key = financial.childNodes[1].textContent;
-          let value = financial.childNodes[3].textContent;
-          if (value.includes("%"))
-            obj[key] = value = value.replace("%", "") / 100;
-          else obj[key] = value.replace(",", "") * 1;
-        }
-      });
-
-      //liabilities
-      const liabsRoot = document.querySelector(
-        "#cr_cashflow > div.collapsed > div.cr_cashflow_table > table > tbody"
-      );
-      Array.prototype.forEach.call(liabsRoot.childNodes, (financial) => {
-        if (financial.className != "hide" && financial.nodeName != "#text") {
-          let key = financial.childNodes[1].textContent;
-          let value = financial.childNodes[3].textContent;
-          if (value.includes("%"))
-            obj[key] = value = value.replace("%", "") / 100;
-          else obj[key] = value.replace(",", "") * 1;
-        }
-
-        //price
-        const price = document.querySelector("#quote_val");
-        obj["Price"] = price.textContent * 1;
-        obj["Denom"] = denom;
-        obj["Currency"] = currency;
-        obj["Time"] = time;
-        obj['Timeframe']='Q';
-      });
-      return obj;
-    });
-
-    if (balanceSheet.error) {
-      debug ? console.log(Symbol, balanceSheet.error) : null;
-      return "error";
-    }
-    ////////IncomeStatement\\\\\\\\\\\\
-
-    await page.goto(
-      incomeStatementURL,
-      { waitUntil: "domcontentloaded" },
-      { timeout: 0 }
-    );
-    const incomeStatement = await page.evaluate(() => {
-      let obj = {};
-
-      const root = document.querySelector(
-        "#cr_cashflow > div.expanded > div.cr_cashflow_table > table > tbody"
-      );
-      Array.prototype.forEach.call(root.childNodes, (financial) => {
-        if (financial.className != "hide" && financial.nodeName != "#text") {
-          let key = financial.childNodes[1].textContent;
-          let value = financial.childNodes[3].textContent;
-          if (value.includes("%")) {
-            obj[key] = value = value.replace("%", "") / 100;
-          } else {
-            if (Array.from(value)[0] == "(")
-              obj[key] =
-                value.replace(",", "").replace("(", "").replace(")", "") * -1;
-            else obj[key] = value.replace(",", "") * 1;
-          }
-        }
-      });
-
-      return obj;
-    });
-
-    return {
-      ...balanceSheet,
-      ...incomeStatement,
-      ...{ ScrapeDate: new Date().toLocaleDateString("en-US") },
-    };
-  } catch (error) {
-    debug ? console.log("--", Symbol, error) : null;
-  }
-}
-
-async function scrapeHistory(Symbol, page) {Symbol='AAPL'
-
-  let balanceSheetURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/balance-sheet`;
-  let incomeStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/income-statement`;
-  let cashflowStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/cash-flow`;
-
-  try {
-    ////////Balance sheet\\\\\\\
-    await page.goto(
-      balanceSheetURL,
-      { waitUntil: "domcontentloaded" },
-      { timeout: 0 }
-    );
-      
-    const balanceSheet = await page.evaluate(() => {
-      //scrape elements
-      const error = document.querySelector("#cr_cashflow > span");
-      if (error) return { error: "pageDown" };
-      const meta = document.querySelector(".fiscalYr").textContent.split(" ");
-      const price = document.querySelector("#quote_val").textContent;
-      const assetsTable = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table");
-      const liabsTable = document.querySelector("#cr_cashflow > div.collapsed > div.cr_cashflow_table > table");
-      
-      //html table to json time series
-      function table2data(tableEl){
-        let data=[], columns=[], formattedData=[];
-        Array.prototype.forEach.call(tableEl.tHead.childNodes[1].childNodes,(th)=>{
-          if(th.textContent.startsWith('20'))columns.push(th.textContent);
-        })
-        Array.prototype.forEach.call(tableEl.childNodes[3].childNodes,tr=>{
-          if (tr.className != "hide" && tr.nodeName != "#text") {
-            let internalIdx=-2;
-            Array.prototype.forEach.call(tr.childNodes,(financial,idx)=>{
-              if(idx>11)return;
-              if(financial.nodeName != "#text"){
-                let year = columns[internalIdx+idx];
-                data[year]={...data[year],...{[tr.childNodes[1].textContent]:financial.textContent}}
-                internalIdx--;
-              }
-            });
-          }
-        })
-        Object.keys(data).map(yr=>{
-          if(yr == 'undefined')return;
-          formattedData.push({...data[yr],...{year:yr}})
-        })
-        return formattedData;
-      }
-
-      const currency = meta[meta.length - 2], denom = meta[meta.length - 1].replace(".", "");
-      let assetsData=table2data(assetsTable);
-      let liabsData=table2data(liabsTable)
-
-      return {assetsData, liabsData, currency, denom, price};
-    });
-    ////////end balance sheet\\\\\\\
-
-    if (balanceSheet.error) {
-      debug ? console.log(Symbol, balanceSheet.error) : null;
-      return "error";
-    }
-    //////IncomeStatement\\\\\\\\\\\\
-
-    await page.goto(
-      incomeStatementURL,
-      { waitUntil: "domcontentloaded" },
-      { timeout: 0 }
-    );
-
-    const incomeStatement = await page.evaluate(() => {
-      //scrape elements
-      const error = document.querySelector("#cr_cashflow > span");
-      if (error) return { error: "pageDown" };
-      const incomeTable = document.querySelector("#cr_cashflow > div.expanded > div > table")
-      
-      //html table to json time series
-      function table2data(tableEl){
-        let data=[], columns=[], formattedData=[];
-        Array.prototype.forEach.call(tableEl.tHead.childNodes[1].childNodes,(th)=>{
-          if(th.textContent.startsWith('20'))columns.push(th.textContent);
-        })
-        Array.prototype.forEach.call(tableEl.childNodes[3].childNodes,tr=>{
-          if (tr.className != "hide" && tr.nodeName != "#text") {
-            let internalIdx=-2;
-            Array.prototype.forEach.call(tr.childNodes,(financial,idx)=>{
-              if(idx>11)return;
-              if(financial.nodeName != "#text"){
-                let year = columns[internalIdx+idx];
-                data[year]={...data[year],...{[tr.childNodes[1].textContent]:financial.textContent}}
-                internalIdx--;
-              }
-            });
-          }
-        })
-        Object.keys(data).map(yr=>{
-          if(yr == 'undefined')return;
-          formattedData.push({...data[yr],...{year:yr}})
-        })
-        return formattedData;
-      }
-
-      let incomeSt=table2data(incomeTable);
-
-      return {incomeSt};
-    });
-
-    //////Cashflow\\\\\\\\\\\\
-
-    await page.goto(
-      cashflowStatementURL,
-      { waitUntil: "domcontentloaded" },
-      { timeout: 0 }
-    );
-    const cashflowStatement = await page.evaluate(() => {
-      //scrape elements
-      const error = document.querySelector("#cr_cashflow > span");
-      if (error) return { error: "pageDown" };
-      const operatingCFTable = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table");
-      const investingCFTable = document.querySelector("#cr_cashflow > div:nth-child(3) > div.cr_cashflow_table > table");
-      const financingCFTable = document.querySelector("#cr_cashflow > div:nth-child(4) > div.cr_cashflow_table > table");
-
-      //html table to json time series
-      function table2data(tableEl){
-        let data=[], columns=[], formattedData=[];
-        Array.prototype.forEach.call(tableEl.tHead.childNodes[1].childNodes,(th)=>{
-          if(th.textContent.startsWith('20'))columns.push(th.textContent);
-        })
-        Array.prototype.forEach.call(tableEl.childNodes[3].childNodes,tr=>{
-          if (tr.className != "hide" && tr.nodeName != "#text") {
-            let internalIdx=-2;
-            Array.prototype.forEach.call(tr.childNodes,(financial,idx)=>{
-              if(idx>11)return;
-              if(financial.nodeName != "#text"){
-                let year = columns[internalIdx+idx];
-                data[year]={...data[year],...{[tr.childNodes[1].textContent]:financial.textContent}}
-                internalIdx--;
-              }
-            });
-          }
-        })
-        Object.keys(data).map(yr=>{
-          if(yr == 'undefined')return;
-          formattedData.push({...data[yr],...{year:yr}})
-        })
-        return formattedData;
-      }
-
-      let operatingCF=table2data(operatingCFTable);
-      let investingCF=table2data(investingCFTable);
-      let financingCF=table2data(financingCFTable);
-
-      return {operatingCF, investingCF, financingCF};
-    });
-
-    if (cashflowStatement.error) {
-      debug ? console.log(Symbol, cashflowStatement.error) : null;
-      return "error";
-    }
-
-    ////////end income statement\\\\\\\
-
-    return {
-      ...balanceSheet,
-      ...incomeStatement,
-      ...cashflowStatement,
-      ...{ ScrapeDate: new Date().toLocaleDateString("en-US") },
-    };
-
-   } catch (error) {
-     debug ? console.log("--", Symbol, error) : null;
-  }
-}
-
-function structureData(data){
+function structureData(data, checkIntegrity=false){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
+    if(checkIntegrity){
+      Array.from(arguments).forEach(arg=>{
+      if(!arg) throw 'Data integrity fail', 'missing',Array.from(arguments).indexOf(arg);
+      })
+    }
     let arrFin=[];
     arr1.map(arr1PerYr=>{
       let arr2SameYr = arr2.filter(arr2PerYr=>arr2PerYr.year==arr1PerYr.year)[0];
@@ -324,8 +53,7 @@ function structureData(data){
       let arr4SameYr = arr4.filter(arr4PerYr=>arr4PerYr.year==arr1PerYr.year)[0];
       let arr5SameYr = arr5.filter(arr5PerYr=>arr5PerYr.year==arr1PerYr.year)[0];
       let arr6SameYr = arr6.filter(arr6PerYr=>arr6PerYr.year==arr1PerYr.year)[0];
-      //console.log(arr1PerYr,arr2SameYr,arr3SameYr)
-      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, currency:data.currency, denom:data.denom, price:data.price, symbol:Symbol});
+      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, Currency:data.Currency, Denom:data.Denom, Price:data.Price, Symbol:Symbol, Timeframe:data.Timeframe, ScrapeDate:data.ScrapeDate});
     })
     return arrFin;
   }
@@ -366,17 +94,26 @@ makeBrowser().then(async (init) => {
   }
 
   //start scraping
-  data.tickers=['AAPL']
   for (Symbol of data.tickers) {
-    let tryCounter = 1;
+    let tryCounter = 1, latest, allData;
     while (tryCounter < 3) {
-      resp = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
-      resp=structureData(resp);
-      console.log(resp)
-      if (resp != "error") {
+      try{
+        latest = await scrapeLatest(Symbol, init.page);
+        allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
+        if(latest.error || allData.error) throw 'PageDown error'
+        structureData(allData, true)  //check data integrity
+      }catch(err){
+        tryCounter++;
+        debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
+        if (tryCounter == 3) console.log(`--${Symbol} scraping fail`);
+      }break;
+    }
+      allData = structureData(allData);
+      allData.push({...latest,Symbol:Symbol});
+      console.log(allData);
+      if (allData != "error") {
         try {
           //resp = compute(resp);
-          resp = { ...resp, ...{ Symbol } };
 
           //console.log(resp);
           return;
@@ -398,12 +135,9 @@ makeBrowser().then(async (init) => {
         }
         break;
       }
-      tryCounter++;
-      debug
-        ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`)
-        : null;
+     
     }
-    if (tryCounter == 3) console.log(`--${Symbol} scraping fail`);
-  }
+    
+  
   init.browser.close();
 });
