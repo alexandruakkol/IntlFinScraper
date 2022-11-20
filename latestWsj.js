@@ -40,11 +40,13 @@ const dbData = {
 };
 
 function structureData(data, checkIntegrity=false){
+  if(!Object.keys(data).length)throw 'Data integrity fail, no data!'
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
     if(checkIntegrity){
       Array.from(arguments).forEach(arg=>{
-      if(!arg) throw 'Data integrity fail', 'missing',Array.from(arguments).indexOf(arg);
-      })
+      if(!arg || !Object.keys(arg).length) throw 'Data integrity fail', 'missing',Array.from(arguments).indexOf(arg);
+      });
+      return;
     }
     let arrFin=[];
     arr1.map(arr1PerYr=>{
@@ -57,7 +59,7 @@ function structureData(data, checkIntegrity=false){
     })
     return arrFin;
   }
-  data = joinByYear(data.assetsData, data.incomeSt, data.liabsData, data.operatingCF, data.investingCF, data.financingCF);
+  data = joinByYear(data['assetsData'], data['incomeSt'], data['liabsData'], data['operatingCF'], data['investingCF'], data['financingCF']);
   return data;
 }
 
@@ -94,7 +96,7 @@ makeBrowser().then(async (init) => {
   }
 
   //start scraping
-  for (Symbol of data.tickers) {
+  for (Symbol of data.tickers) {Symbol='AADI'
     let tryCounter = 1, latest, allData;
     while (tryCounter < 3) {
       try{
@@ -102,11 +104,11 @@ makeBrowser().then(async (init) => {
         allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
         if(latest.error || allData.error) throw 'PageDown error'
         structureData(allData, true)  //check data integrity
-      }catch(err){
+      } catch(err) {
         tryCounter++;
         debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
         if (tryCounter == 3) console.log(`--${Symbol} scraping fail`);
-      }break;
+      } break;
     }
       allData = structureData(allData);
       allData.push({...latest,Symbol:Symbol});
@@ -114,21 +116,20 @@ makeBrowser().then(async (init) => {
       if (allData != "error") {
         
         try {
-          Object.entries(dbData).forEach((pair) => {
-            //translate keys via dbData dictionary
-            let key = pair[0],
-              newkey = dbData[key];
-            resp[newkey] = resp[key];
-          });
-          insertRow(
-            Object.entries(resp).filter((pair) =>
-              Object.values(dbData).includes(pair[0])
-            )
-          );
+          // Object.entries(dbData).forEach((pair) => {
+          //   //translate keys via dbData dictionary
+          //   let key = pair[0],
+          //     newkey = dbData[key];
+          //   resp[newkey] = resp[key];
+          // });
+          // insertRow(
+          //   Object.entries(resp).filter((pair) =>
+          //     Object.values(dbData).includes(pair[0])
+          //   )
+          // );
         } catch (er) {
           console.log(`${Symbol} computing error, ${er}`);
         }
-        break;
       }
      
     }
