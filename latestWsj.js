@@ -154,13 +154,13 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
       { waitUntil: "domcontentloaded" },
       { timeout: 0 }
     );
-
+      
     const balanceSheet = await page.evaluate(() => {
       //scrape elements
       const error = document.querySelector("#cr_cashflow > span");
       if (error) return { error: "pageDown" };
       const meta = document.querySelector(".fiscalYr").textContent.split(" ");
-      const price = document.querySelector("#quote_val");
+      const price = document.querySelector("#quote_val").textContent;
       const assetsTable = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table");
       const liabsTable = document.querySelector("#cr_cashflow > div.collapsed > div.cr_cashflow_table > table");
       
@@ -194,8 +194,9 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
       let assetsData=table2data(assetsTable);
       let liabsData=table2data(liabsTable)
 
-      return {assetsData, liabsData, time, currency, denom, price};
+      return {assetsData, liabsData, currency, denom, price};
     });
+    ////////end balance sheet\\\\\\\
 
     if (balanceSheet.error) {
       debug ? console.log(Symbol, balanceSheet.error) : null;
@@ -208,6 +209,7 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
       { waitUntil: "domcontentloaded" },
       { timeout: 0 }
     );
+
     const incomeStatement = await page.evaluate(() => {
       //scrape elements
       const error = document.querySelector("#cr_cashflow > span");
@@ -244,7 +246,7 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
 
       return {incomeSt};
     });
-
+    ////////end income statement\\\\\\\
 
     return {
       ...balanceSheet,
@@ -256,6 +258,20 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
    } catch (error) {
      debug ? console.log("--", Symbol, error) : null;
   }
+}
+
+function structureData(data){
+  function joinByYear(arr1,arr2,arr3){let arr4=[];
+    arr1.map(arr1PerYr=>{
+      let arr2SameYr = arr2.filter(arr2PerYr=>arr2PerYr.year==arr1PerYr.year)[0];
+      let arr3SameYr = arr3.filter(arr3PerYr=>arr3PerYr.year==arr1PerYr.year)[0];
+      //console.log(arr1PerYr,arr2SameYr,arr3SameYr)
+      arr4.push({...arr1PerYr,...arr2SameYr, ...arr3SameYr,currency:data.currency,denom:data.denom,price:data.price, symbol:Symbol});
+    })
+    return arr4;
+  }
+  data = joinByYear(data.assetsData, data.incomeSt, data.liabsData);
+  return data;
 }
 
 async function makeBrowser() {
@@ -295,11 +311,12 @@ makeBrowser().then(async (init) => {
   for (Symbol of data.tickers) {
     let tryCounter = 1;
     while (tryCounter < 3) {
-      resp = await scrapeHistory(Symbol, init.page);
-      console.log(resp);
+      resp = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
+      resp=structureData(resp);
+      console.log(resp)
       if (resp != "error") {
         try {
-          resp = compute(resp);
+          //resp = compute(resp);
           resp = { ...resp, ...{ Symbol } };
 
           //console.log(resp);
