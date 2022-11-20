@@ -112,13 +112,8 @@ makeBrowser().then(async (init) => {
       allData.push({...latest,Symbol:Symbol});
       console.log(allData);
       if (allData != "error") {
+        
         try {
-          //resp = compute(resp);
-
-          //console.log(resp);
-          return;
-
-
           Object.entries(dbData).forEach((pair) => {
             //translate keys via dbData dictionary
             let key = pair[0],
