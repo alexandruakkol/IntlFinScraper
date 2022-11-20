@@ -1,8 +1,8 @@
 const { Client } = require("pg"),
   getBaseTickers = require("./getAllUSTickers");
 require("dotenv").config();
-mode = "APPEND-ONLY";
-debug = false;
+mode = "OVERWRITE";
+debug = true;
 const { user, host, database, password, port } = process.env;
 const client = new Client({
   user,
@@ -10,9 +10,18 @@ const client = new Client({
   database,
   password,
   port,
+  ssl:true
 });
-client.connect();
-console.log("DB client open");
+client.connect(err => {
+  if (err) {
+    console.error('DB connection error', err.stack)
+    throw 'DB connection error'
+    ;}
+  else console.log('DB connected')
+});
+
+return;
+
 function v2arr(arr) {
   //array of objects to array of object values
   const arrval = [];
