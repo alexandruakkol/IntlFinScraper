@@ -146,6 +146,7 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
 
   let balanceSheetURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/balance-sheet`;
   let incomeStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/income-statement`;
+  let cashflowStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/cash-flow`;
 
   try {
     ////////Balance sheet\\\\\\\
@@ -246,14 +247,68 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
 
       return {incomeSt};
     });
+
+    //////Cashflow\\\\\\\\\\\\
+
+    await page.goto(
+      cashflowStatementURL,
+      { waitUntil: "domcontentloaded" },
+      { timeout: 0 }
+    );
+    const cashflowStatement = await page.evaluate(() => {
+      //scrape elements
+      const error = document.querySelector("#cr_cashflow > span");
+      if (error) return { error: "pageDown" };
+      const operatingCFTable = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table");
+      const investingCFTable = document.querySelector("#cr_cashflow > div:nth-child(3) > div.cr_cashflow_table > table");
+      const financingCFTable = document.querySelector("#cr_cashflow > div:nth-child(4) > div.cr_cashflow_table > table");
+
+      //html table to json time series
+      function table2data(tableEl){
+        let data=[], columns=[], formattedData=[];
+        Array.prototype.forEach.call(tableEl.tHead.childNodes[1].childNodes,(th)=>{
+          if(th.textContent.startsWith('20'))columns.push(th.textContent);
+        })
+        Array.prototype.forEach.call(tableEl.childNodes[3].childNodes,tr=>{
+          if (tr.className != "hide" && tr.nodeName != "#text") {
+            let internalIdx=-2;
+            Array.prototype.forEach.call(tr.childNodes,(financial,idx)=>{
+              if(idx>11)return;
+              if(financial.nodeName != "#text"){
+                let year = columns[internalIdx+idx];
+                data[year]={...data[year],...{[tr.childNodes[1].textContent]:financial.textContent}}
+                internalIdx--;
+              }
+            });
+          }
+        })
+        Object.keys(data).map(yr=>{
+          if(yr == 'undefined')return;
+          formattedData.push({...data[yr],...{year:yr}})
+        })
+        return formattedData;
+      }
+
+      let operatingCF=table2data(operatingCFTable);
+      let investingCF=table2data(investingCFTable);
+      let financingCF=table2data(financingCFTable);
+
+      return {operatingCF, investingCF, financingCF};
+    });
+
+    if (cashflowStatement.error) {
+      debug ? console.log(Symbol, cashflowStatement.error) : null;
+      return "error";
+    }
+
     ////////end income statement\\\\\\\
 
     return {
       ...balanceSheet,
       ...incomeStatement,
+      ...cashflowStatement,
       ...{ ScrapeDate: new Date().toLocaleDateString("en-US") },
     };
-
 
    } catch (error) {
      debug ? console.log("--", Symbol, error) : null;
@@ -261,16 +316,20 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
 }
 
 function structureData(data){
-  function joinByYear(arr1,arr2,arr3){let arr4=[];
+  function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
+    let arrFin=[];
     arr1.map(arr1PerYr=>{
       let arr2SameYr = arr2.filter(arr2PerYr=>arr2PerYr.year==arr1PerYr.year)[0];
       let arr3SameYr = arr3.filter(arr3PerYr=>arr3PerYr.year==arr1PerYr.year)[0];
+      let arr4SameYr = arr4.filter(arr4PerYr=>arr4PerYr.year==arr1PerYr.year)[0];
+      let arr5SameYr = arr5.filter(arr5PerYr=>arr5PerYr.year==arr1PerYr.year)[0];
+      let arr6SameYr = arr6.filter(arr6PerYr=>arr6PerYr.year==arr1PerYr.year)[0];
       //console.log(arr1PerYr,arr2SameYr,arr3SameYr)
-      arr4.push({...arr1PerYr,...arr2SameYr, ...arr3SameYr,currency:data.currency,denom:data.denom,price:data.price, symbol:Symbol});
+      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, currency:data.currency, denom:data.denom, price:data.price, symbol:Symbol});
     })
-    return arr4;
+    return arrFin;
   }
-  data = joinByYear(data.assetsData, data.incomeSt, data.liabsData);
+  data = joinByYear(data.assetsData, data.incomeSt, data.liabsData, data.operatingCF, data.investingCF, data.financingCF);
   return data;
 }
 
