@@ -148,8 +148,7 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
   let incomeStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/income-statement`;
 
   try {
-    ////////Balance sheet\\\\\\\\
-
+    ////////Balance sheet\\\\\\\
     await page.goto(
       balanceSheetURL,
       { waitUntil: "domcontentloaded" },
@@ -157,88 +156,110 @@ async function scrapeHistory(Symbol, page) {Symbol='AAPL'
     );
 
     const balanceSheet = await page.evaluate(() => {
+      //scrape elements
       const error = document.querySelector("#cr_cashflow > span");
       if (error) return { error: "pageDown" };
       const meta = document.querySelector(".fiscalYr").textContent.split(" ");
-      const currency = meta[meta.length - 2],
-        denom = meta[meta.length - 1].replace(".", "");
-      const time = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > thead > tr > th:nth-child(2)").textContent;
       const price = document.querySelector("#quote_val");
-      //assets
-      const assetsTable = JSON.stringify(document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table"));
-
-      //liabilities
+      const assetsTable = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table");
       const liabsTable = document.querySelector("#cr_cashflow > div.collapsed > div.cr_cashflow_table > table");
-      // Array.prototype.forEach.call(liabsRoot.childNodes, (financial) => {
-      //   if (financial.className != "hide" && financial.nodeName != "#text") {
-      //     let key = financial.childNodes[1].textContent;
-      //     let value = financial.childNodes[3].textContent;
-      //     if (value.includes("%"))
-      //       obj[key] = value = value.replace("%", "") / 100;
-      //     else obj[key] = value.replace(",", "") * 1;
-      //   }
+      
+      //html table to json time series
+      function table2data(tableEl){
+        let data=[], columns=[], formattedData=[];
+        Array.prototype.forEach.call(tableEl.tHead.childNodes[1].childNodes,(th)=>{
+          if(th.textContent.startsWith('20'))columns.push(th.textContent);
+        })
+        Array.prototype.forEach.call(tableEl.childNodes[3].childNodes,tr=>{
+          if (tr.className != "hide" && tr.nodeName != "#text") {
+            let internalIdx=-2;
+            Array.prototype.forEach.call(tr.childNodes,(financial,idx)=>{
+              if(idx>11)return;
+              if(financial.nodeName != "#text"){
+                let year = columns[internalIdx+idx];
+                data[year]={...data[year],...{[tr.childNodes[1].textContent]:financial.textContent}}
+                internalIdx--;
+              }
+            });
+          }
+        })
+        Object.keys(data).map(yr=>{
+          if(yr == 'undefined')return;
+          formattedData.push({...data[yr],...{year:yr}})
+        })
+        return formattedData;
+      }
 
-      //   //price
-      //   const price = document.querySelector("#quote_val");
-      //   obj["Price"] = price.textContent * 1;
-      //   obj["Denom"] = denom;
-      //   obj["Currency"] = currency;
-      //   obj["Time"] = time;
-      //   obj['Timeframe']='Q';
-      // });
-      return {assetsTable, liabsTable, time, currency, denom, price};
+      const currency = meta[meta.length - 2], denom = meta[meta.length - 1].replace(".", "");
+      let assetsData=table2data(assetsTable);
+      let liabsData=table2data(liabsTable)
+
+      return {assetsData, liabsData, time, currency, denom, price};
     });
 
-    // if (balanceSheet.error) {
-    //   debug ? console.log(Symbol, balanceSheet.error) : null;
-    //   return "error";
-    // }
-    ////////IncomeStatement\\\\\\\\\\\\
+    if (balanceSheet.error) {
+      debug ? console.log(Symbol, balanceSheet.error) : null;
+      return "error";
+    }
+    //////IncomeStatement\\\\\\\\\\\\
 
-  //   await page.goto(
-  //     incomeStatementURL,
-  //     { waitUntil: "domcontentloaded" },
-  //     { timeout: 0 }
-  //   );
-  //   const incomeStatement = await page.evaluate(() => {
-  //     let obj = {};
+    await page.goto(
+      incomeStatementURL,
+      { waitUntil: "domcontentloaded" },
+      { timeout: 0 }
+    );
+    const incomeStatement = await page.evaluate(() => {
+      //scrape elements
+      const error = document.querySelector("#cr_cashflow > span");
+      if (error) return { error: "pageDown" };
+      const incomeTable = document.querySelector("#cr_cashflow > div.expanded > div > table")
+      
+      //html table to json time series
+      function table2data(tableEl){
+        let data=[], columns=[], formattedData=[];
+        Array.prototype.forEach.call(tableEl.tHead.childNodes[1].childNodes,(th)=>{
+          if(th.textContent.startsWith('20'))columns.push(th.textContent);
+        })
+        Array.prototype.forEach.call(tableEl.childNodes[3].childNodes,tr=>{
+          if (tr.className != "hide" && tr.nodeName != "#text") {
+            let internalIdx=-2;
+            Array.prototype.forEach.call(tr.childNodes,(financial,idx)=>{
+              if(idx>11)return;
+              if(financial.nodeName != "#text"){
+                let year = columns[internalIdx+idx];
+                data[year]={...data[year],...{[tr.childNodes[1].textContent]:financial.textContent}}
+                internalIdx--;
+              }
+            });
+          }
+        })
+        Object.keys(data).map(yr=>{
+          if(yr == 'undefined')return;
+          formattedData.push({...data[yr],...{year:yr}})
+        })
+        return formattedData;
+      }
 
-  //     const root = document.querySelector(
-  //       "#cr_cashflow > div.expanded > div.cr_cashflow_table > table > tbody"
-  //     );
-  //     Array.prototype.forEach.call(root.childNodes, (financial) => {
-  //       if (financial.className != "hide" && financial.nodeName != "#text") {
-  //         let key = financial.childNodes[1].textContent;
-  //         let value = financial.childNodes[3].textContent;
-  //         if (value.includes("%")) {
-  //           obj[key] = value = value.replace("%", "") / 100;
-  //         } else {
-  //           if (Array.from(value)[0] == "(")
-  //             obj[key] =
-  //               value.replace(",", "").replace("(", "").replace(")", "") * -1;
-  //           else obj[key] = value.replace(",", "") * 1;
-  //         }
-  //       }
-  //     });
+      let incomeSt=table2data(incomeTable);
 
-  //     return obj;
-  //   });
+      return {incomeSt};
+    });
 
-  //   return {
-  //     ...balanceSheet,
-  //     ...incomeStatement,
-  //     ...{ ScrapeDate: new Date().toLocaleDateString("en-US") },
-  //   };
-  return balanceSheet
+
+    return {
+      ...balanceSheet,
+      ...incomeStatement,
+      ...{ ScrapeDate: new Date().toLocaleDateString("en-US") },
+    };
+
+
    } catch (error) {
      debug ? console.log("--", Symbol, error) : null;
   }
-
-
 }
 
 async function makeBrowser() {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   return { page, browser };
 }
