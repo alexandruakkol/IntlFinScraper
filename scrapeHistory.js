@@ -40,7 +40,7 @@ try {
             }
             if(financial.nodeName != "#text"){
               let year = columns[internalIdx+idx];
-              data[year]={...data[year],...{[tr.childNodes[1].textContent]:value}}
+              data[year]={...data[year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -98,7 +98,7 @@ try {
             }
             if(financial.nodeName != "#text"){
               let year = columns[internalIdx+idx];
-              data[year]={...data[year],...{[tr.childNodes[1].textContent]:value}}
+              data[year]={...data[year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -150,7 +150,7 @@ try {
             }
             if(financial.nodeName != "#text"){
               let year = columns[internalIdx+idx];
-              data[year]={...data[year],...{[tr.childNodes[1].textContent]:value}}
+              data[year]={...data[year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });

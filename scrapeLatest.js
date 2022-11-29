@@ -28,7 +28,7 @@ async function scrapeLatest(Symbol, page) {
             let obj={};
             Array.prototype.forEach.call(root.childNodes, (financial) => {
                 if (financial.className != "hide" && financial.nodeName != "#text") {
-                let key = financial.childNodes[1].textContent;
+                let key = financial.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','ovr');
                 let value = financial.childNodes[3].textContent;
                 if (value.includes("%"))
                     obj[key] = value = value.replace("%", "") / 100;
@@ -68,7 +68,7 @@ async function scrapeLatest(Symbol, page) {
       const root = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > tbody");
       Array.prototype.forEach.call(root.childNodes, (financial) => {
         if (financial.className != "hide" && financial.nodeName != "#text") {
-          let key = financial.childNodes[1].textContent;
+          let key = financial.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','ovr');
           let value = financial.childNodes[3].textContent;
           if (value.includes("%")) obj[key] = value = value.replace("%", "") / 100;
             else {
@@ -99,7 +99,7 @@ async function scrapeLatest(Symbol, page) {
         let obj = {};
         Array.prototype.forEach.call(root.childNodes, (financial) => {
             if (financial.className != "hide" && financial.nodeName != "#text") {
-            let key = financial.childNodes[1].textContent;
+            let key = financial.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','ovr');
             let value = financial.childNodes[3].textContent;
             if (value.includes("%")) {
                 obj[key] = value = value.replace("%", "") / 100;

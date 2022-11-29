@@ -40,11 +40,11 @@ const dbData = {
 };
 
 function structureData(data, checkIntegrity=false){
-  if(!Object.keys(data).length)throw 'Data integrity fail, no data!'
+  //if(!Object.keys(data).length)throw 'Data integrity fail, no data!'
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
     if(checkIntegrity){
       Array.from(arguments).forEach(arg=>{
-      if(!arg || !Object.keys(arg).length) throw 'Data integrity fail', 'missing',Array.from(arguments).indexOf(arg);
+        if(!arg || !Array.isArray(arg) || !Object.keys(arg).length) throw new Error ('Data integrity fail');
       });
       return;
     }
@@ -96,7 +96,7 @@ makeBrowser().then(async (init) => {
   }
 
   //start scraping
-  for (Symbol of data.tickers) {Symbol='AADI'
+  for (Symbol of data.tickers) {Symbol='AAPL'
     let tryCounter = 1, latest, allData;
     while (tryCounter < 3) {
       try{
@@ -104,17 +104,17 @@ makeBrowser().then(async (init) => {
         allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
         if(latest.error || allData.error) throw 'PageDown error'
         structureData(allData, true)  //check data integrity
+        break;
       } catch(err) {
         tryCounter++;
         debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
-        if (tryCounter == 3) console.log(`--${Symbol} scraping fail`);
-      } break;
+        if (tryCounter == 3) {console.log(`--${Symbol} total scraping fail`); allData='error'}
+      } 
     }
-      allData = structureData(allData);
-      allData.push({...latest,Symbol:Symbol});
-      console.log(allData);
-      if (allData != "error") {
-        
+    if (allData != "error" && latest !='error') {
+        allData = structureData(allData);
+        allData.push({...latest,Symbol:Symbol});
+        console.log(allData);
         try {
           // Object.entries(dbData).forEach((pair) => {
           //   //translate keys via dbData dictionary
