@@ -6,7 +6,12 @@ async function scrapeLatest(Symbol, page) {
 
   try {
     ////////Balance sheet\\\\\\\\
-
+    await page.setExtraHTTPHeaders({   
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+      'content-type': 'text/plain;charset=UTF-8',
+      'accept': '*/*',
+      'accept-language': 'en-US,en;q=0.9',
+    })
     await page.goto(
       balanceSheetURL,
       { waitUntil: "domcontentloaded" },
@@ -28,7 +33,7 @@ async function scrapeLatest(Symbol, page) {
             let obj={};
             Array.prototype.forEach.call(root.childNodes, (financial) => {
                 if (financial.className != "hide" && financial.nodeName != "#text") {
-                let key = financial.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','ovr');
+                let key = financial.childNodes[1].textContent.replace(/[" !"#$%&'()*+,-./:;<=>?@^_`{|}~"]/g,'')
                 let value = financial.childNodes[3].textContent;
                 if (value.includes("%"))
                     obj[key] = value = value.replace("%", "") / 100;
@@ -68,7 +73,7 @@ async function scrapeLatest(Symbol, page) {
       const root = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > tbody");
       Array.prototype.forEach.call(root.childNodes, (financial) => {
         if (financial.className != "hide" && financial.nodeName != "#text") {
-          let key = financial.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','ovr');
+          let key = financial.childNodes[1].textContent.replace(/[" !"#$%&'()*+,-./:;<=>?@^_`{|}~"]/g,'')
           let value = financial.childNodes[3].textContent;
           if (value.includes("%")) obj[key] = value = value.replace("%", "") / 100;
             else {
@@ -99,7 +104,7 @@ async function scrapeLatest(Symbol, page) {
         let obj = {};
         Array.prototype.forEach.call(root.childNodes, (financial) => {
             if (financial.className != "hide" && financial.nodeName != "#text") {
-            let key = financial.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','ovr');
+            let key = financial.childNodes[1].textContent.replace(/[" !"#$%&'()*+,-./:;<=>?@^_`{|}~"]/g,'')
             let value = financial.childNodes[3].textContent;
             if (value.includes("%")) {
                 obj[key] = value = value.replace("%", "") / 100;

@@ -6,6 +6,12 @@ let cashflowStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/fin
 
 try {
   ////////Balance sheet\\\\\\\
+  await page.setExtraHTTPHeaders({   
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+    'content-type': 'text/plain;charset=UTF-8',
+    'accept': '*/*',
+    'accept-language': 'en-US,en;q=0.9',
+  })
   await page.goto(
     balanceSheetURL,
     { waitUntil: "domcontentloaded" },
@@ -40,7 +46,7 @@ try {
             }
             if(financial.nodeName != "#text"){
               let Year = columns[internalIdx+idx];
-              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
+              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[" !"#$%&'()*+,-./:;<=>?@^_`{|}~"]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -98,7 +104,7 @@ try {
             }
             if(financial.nodeName != "#text"){
               let Year = columns[internalIdx+idx];
-              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
+              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[" !"#$%&'()*+,-./:;<=>?@^_`{|}~"]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -150,7 +156,7 @@ try {
             }
             if(financial.nodeName != "#text"){
               let Year = columns[internalIdx+idx];
-              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
+              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[" !"#$%&'()*+,-./:;<=>?@^_`{|}~"]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });

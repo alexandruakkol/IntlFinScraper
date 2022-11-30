@@ -32,10 +32,10 @@ function v2arr(arr) {
 
 async function getTickers() {
   existingSymbols = [];
-  client.query(`SELECT symbol from ${table}`, (err, res) => {
-    if(err){tempLog.error(`DB select error: ${err}`);return}
+  try {
+    const res = await client.query(`SELECT symbol from ${table}`)
     existingSymbols = v2arr(res.rows);
-  });
+  } catch (err) {tempLog.error(`DB select error: ${err}`)}
   const baseTickers = await getBaseTickers();
   return {
     tickers: baseTickers.filter((t) => !existingSymbols.includes(t)),
@@ -61,11 +61,12 @@ async function insertCluster(data, Symbol) {
       handleDBError(err, Main);
     }}
   Main.insertRow(Symbol);
+
   function handleDBError(err, Main){
     let match1 = `error: column "`;
     let match2 = `" of relation "${table}" does not exist`;
     if(String(err).includes(match2)){handleMissingColumn(String(err), match1, match2, Main)}
-    else tempLog.error(`${Symbol} DB insert error: ${err}`)
+    else tempLog.error(`${Symbol} DB insert error: ${err} ${Main.query}`)
   }
 
   async function handleMissingColumn(err, match1, match2, Main){
@@ -76,7 +77,7 @@ async function insertCluster(data, Symbol) {
       await client.query(query);
       tempLog.newColumn(`${Symbol} ${newColumnName} added to DB`);
     } catch (err) { 
-      tempLog.error(`${Symbol} DB new column insert error: ${err} ${query}`)
+      tempLog.error(`${Symbol} DB new column insert error: ${err}`)
     }
     Main.insertRow(Symbol);
   }
