@@ -4,7 +4,6 @@ const puppeteer = require("puppeteer"),
     getBaseTickers = require("./getAllUSTickers"),
     {scrapeLatest} = require("./scrapeLatest"),
     {scrapeHistory} = require('./scrapeHistory');
-const { createLogger } = require("winston");
 
 function structureData(data, checkIntegrity=false){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
