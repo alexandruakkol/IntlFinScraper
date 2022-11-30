@@ -37,19 +37,12 @@ async function makeBrowser() {
 
 makeBrowser().then(async (init) => {
   //mode logic
-  let data = {}
+  let data = {};
   switch (mode) {
     case "APPEND-ONLY":
       data = await getTickers();
-      console.log(
-        mode,
-        "mode.",
-        "Pulling",
-        data.tickers.length,
-        "of",
-        data.baseCounter,
-        "total symbols."
-      );
+      var noSymbolsYetToPull = data.tickers.length;
+      console.log(`${mode} mode. Pulling ${noSymbolsYetToPull} of ${data.baseCounter} total symbols.`);
       break;
     case "OVERWRITE":
       data.tickers = await getBaseTickers();
@@ -62,7 +55,7 @@ makeBrowser().then(async (init) => {
 
   //start scraping
   for (Symbol of data.tickers) {
-    console.log(Symbol)
+    console.log(`${Symbol} | ${((1-(noSymbolsYetToPull/data.baseCounter))*100).toFixed(2)}% done`)
     let tryCounter = 1, latest, allData;
     while (tryCounter < 3) {
       try {
@@ -84,6 +77,7 @@ makeBrowser().then(async (init) => {
           if (res != "error") insertCluster(res, Symbol) 
         })
     } 
+    noSymbolsYetToPull--;
   }
   init.browser.close();
 });
