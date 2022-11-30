@@ -4,40 +4,6 @@ const puppeteer = require("puppeteer"),
       getBaseTickers = require("./getAllUSTickers"),
     { scrapeLatest } = require("./scrapeLatest"),
     { scrapeHistory } = require('./scrapeHistory')
-const dbData = {
-  Cenom: "Denom",
-  Currency: "Currency",
-  Symbol: "Symbol",
-  ScrapeDate: "ScrapeDate",
-  "Total Current Assets": "curassets",
-  "Net Property, Plant & Equipment": "neppropertyplants",
-  "Intangible Assets": "intangibles",
-  "Total Assets": "totalassets",
-  Price: "price",
-  "Total Current Liabilities": "currentliabilities",
-  "Quick Ratio": "quickratio",
-  "Long-Term Debt": "ltdebt",
-  "Total Liabilities": "totalliabilities",
-  "Total Shareholders' Equity": "totalshareholdequity",
-  "Total Equity": "totalequity",
-  "Cost of Goods Sold (COGS) incl. D&A": "cogsplusda",
-  "Depreciation & Amortization Expense": "depramortiz",
-  "Research & Development": "rdexpenses",
-  "Net Income": "netincome",
-  "EPS (Basic)": "eps",
-  "Basic Shares Outstanding": "sharesoutst",
-  EBITDA: "ebitda",
-  "EBITDA Margin": "ebitdamg",
-  "Cash & Short Term Investments": "cashandst",
-  mcap: "mcap",
-  ncavpsppct: "ncavpsppct",
-  ncavpsppct_fixed: "ncavpsppct_fixed",
-  roepct: "roepct",
-  roce: "roce",
-  pe: "pe",
-  depct: "depct",
-  interestRatepct: "interestratepct",
-};
 
 function structureData(data, checkIntegrity=false){
   //if(!Object.keys(data).length)throw 'Data integrity fail, no data!'
@@ -50,11 +16,11 @@ function structureData(data, checkIntegrity=false){
     }
     let arrFin=[];
     arr1.map(arr1PerYr=>{
-      let arr2SameYr = arr2.filter(arr2PerYr=>arr2PerYr.year==arr1PerYr.year)[0];
-      let arr3SameYr = arr3.filter(arr3PerYr=>arr3PerYr.year==arr1PerYr.year)[0];
-      let arr4SameYr = arr4.filter(arr4PerYr=>arr4PerYr.year==arr1PerYr.year)[0];
-      let arr5SameYr = arr5.filter(arr5PerYr=>arr5PerYr.year==arr1PerYr.year)[0];
-      let arr6SameYr = arr6.filter(arr6PerYr=>arr6PerYr.year==arr1PerYr.year)[0];
+      let arr2SameYr = arr2.filter(arr2PerYr=>arr2PerYr.Year==arr1PerYr.Year)[0];
+      let arr3SameYr = arr3.filter(arr3PerYr=>arr3PerYr.Year==arr1PerYr.Year)[0];
+      let arr4SameYr = arr4.filter(arr4PerYr=>arr4PerYr.Year==arr1PerYr.Year)[0];
+      let arr5SameYr = arr5.filter(arr5PerYr=>arr5PerYr.Year==arr1PerYr.Year)[0];
+      let arr6SameYr = arr6.filter(arr6PerYr=>arr6PerYr.Year==arr1PerYr.Year)[0];
       arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, Currency:data.Currency, Denom:data.Denom, Price:data.Price, Symbol:Symbol, Timeframe:data.Timeframe, ScrapeDate:data.ScrapeDate});
     })
     return arrFin;
@@ -98,8 +64,8 @@ makeBrowser().then(async (init) => {
   //start scraping
   for (Symbol of data.tickers) {Symbol='AAPL'
     let tryCounter = 1, latest, allData;
-    while (tryCounter < 3) {
-      try{
+    while (tryCounter < 4) {
+      try {
         latest = await scrapeLatest(Symbol, init.page);
         allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
         if(latest.error || allData.error) throw 'PageDown error'
@@ -108,32 +74,24 @@ makeBrowser().then(async (init) => {
       } catch(err) {
         tryCounter++;
         debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
-        if (tryCounter == 3) {console.log(`--${Symbol} total scraping fail`); allData='error'}
+        if (tryCounter == 4) {console.log(`--${Symbol} total scraping fail`); allData='error'}
       } 
     }
     if (allData != "error" && latest !='error') {
         allData = structureData(allData);
         allData.push({...latest,Symbol:Symbol});
-        console.log(allData);
-        try {
-          // Object.entries(dbData).forEach((pair) => {
-          //   //translate keys via dbData dictionary
-          //   let key = pair[0],
-          //     newkey = dbData[key];
-          //   resp[newkey] = resp[key];
-          // });
-          // insertRow(
-          //   Object.entries(resp).filter((pair) =>
-          //     Object.values(dbData).includes(pair[0])
-          //   )
-          // );
-        } catch (er) {
-          console.log(`${Symbol} computing error, ${er}`);
+        try { 
+          allData = compute(allData) } catch(err){ console.log('compute error', err); allData='error'; 
+        } 
+        //insert into DB
+        if (allData != "error") 
+        try { 
+          insertRow(allData) 
+          console.log(Symbol, 'ok');
+        } catch (err) {
+          console.log(`${Symbol} DB insert error: ${err}`);
         }
-      }
-     
-    }
-    
-  
+    } 
+  }
   init.browser.close();
 });

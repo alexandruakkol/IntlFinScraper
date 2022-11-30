@@ -19,7 +19,7 @@ async function scrapeLatest(Symbol, page) {
         const meta = document.querySelector(".fiscalYr").textContent.split(" ");
         const currency = meta[meta.length - 2],
             denom = meta[meta.length - 1].replace(".", "");
-        const year = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > thead > tr > th:nth-child(2)").textContent;
+        const Year = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > thead > tr > th:nth-child(2)").textContent;
         const price = document.querySelector("#quote_val").textContent;
         const assetsRoot = document.querySelector("#cr_cashflow > div.expanded > div.cr_cashflow_table > table > tbody");
         const liabsRoot = document.querySelector("#cr_cashflow > div.collapsed > div.cr_cashflow_table > table > tbody");
@@ -45,7 +45,7 @@ async function scrapeLatest(Symbol, page) {
         extra["Price"] = price * 1;
         extra["Denom"] = denom;
         extra["Currency"] = currency;
-        extra["Year"] = year;
+        extra["Year"] = Year;
         extra['Timeframe']='Q';
 
         return {...assets,...liabs,...extra};

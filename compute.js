@@ -1,88 +1,92 @@
-function compute(data) {
-  let mcap = null,
-    ncavpsppct = null,
-    ncavpsppct_fixed = null,
-    roepct = null,
-    pe = null,
-    roce = null,
-    depct = null,
-    interestRatepct = null;
+function compute(allData) {
+  let result=[];
 
-  const currentAssets = data["Total Current Assets"],
-    totalLiabilities = data["Total Liabilities"],
-    currentLiabilities = data["Total Current Liabilities"],
-    totalAssets = data["Total Assets"],
-    shares = data["Diluted Shares Outstanding"],
-    price = data["Price"],
-    netIncome = data["Net Income"],
-    totalStockEquity = data[`Total Shareholders' Equity`],
-    dividend = data[""],
-    ebitda = data["EBITDA"],
-    revenues = data["Sales/Revenue"],
-    interestExpense = data["Interest Expense"],
-    longtermLiabilities = data["Long-Term Debt"],
-    DA = data["Depreciation & Amortization Expense"];
-  //ncavpsppct
-  if (currentAssets && totalLiabilities && shares && price) {
-    ncavpsppct = ((currentAssets - totalLiabilities) / shares / price).toFixed(
-      2
-    );
+  let years = allData.map(function(o) { if(!o.Year.includes('-')) return o.Year*1 });
+  years = years.filter(y=>typeof y != 'undefined');
+  let maxYear = Math.max.apply(Math,years)
+
+  for(data of allData){
+    let isAnnual = false, isLastYear;
+    if(data.Timeframe=='A')isAnnual=true;
+    if(data.Year == maxYear)isLastYear=true; //only calc certain metrics for last year (upd price)
+
+    let Mcap = null,
+      Ncavpsppct = null,
+      Ncavpsppct_fixed = null,
+      Roepct = null,
+      Pe = null,
+      Roce = null,
+      Depct = null,
+      InterestRatepct = null;
+
+    const currentAssets = data["TotalCurrentAssets"],
+      totalLiabilities = data["TotalLiabilities"],
+      currentLiabilities = data["TotalCurrentLiabilities"],
+      totalAssets = data["TotalAssets"],
+      shares = data["DilutedSharesOutstanding"],
+      price = data["Price"],
+      netIncome = isAnnual ? data["NetIncome"] : data["NetIncome"]*4,
+      totalStockEquity = data[`TotalShareholdersEquity`],
+      ebitda = data["EBITDA"],
+      interestExpense = isAnnual ? data["InterestExpense"] : data["InterestExpense"]*4,
+      longTermDebt = data["LongTermDebt"],
+      DA = data["DepreciationAmortizationExpense"];
+
+    //Ncavpsppct
+    if (currentAssets && totalLiabilities && shares && price && (isLastYear || !isAnnual)) {
+      Ncavpsppct = ((currentAssets - totalLiabilities) / shares / price).toFixed(2)*1;
+    }
+
+    //Ncavpsppct_fixed (includes fixed assets, adjusted)
+    if (currentAssets && totalAssets && totalLiabilities && shares && price && (isLastYear || !isAnnual)) {
+      const ltAssets = totalAssets - currentAssets;
+      const adjAssets = currentAssets + 0.33 * ltAssets;
+      Ncavpsppct_fixed = ( (adjAssets - totalLiabilities) / shares / price).toFixed(2)*1;
+    }
+
+    //Mcap
+    if (price && shares && (isLastYear || !isAnnual)) {
+      Mcap = (price * shares).toFixed(0)*1;
+    }
+
+    //Roepct
+    if (totalStockEquity && netIncome) {
+      Roepct = (netIncome / totalStockEquity).toFixed(2)*1;
+    }
+
+    //pe
+    if (Mcap && netIncome && (isLastYear || !isAnnual)) {
+      Pe = (Mcap / netIncome).toFixed(2)*1;
+    }
+
+    //de (procentual)
+    if (longTermDebt && totalStockEquity && (isLastYear || !isAnnual)) {
+      Depct = (longTermDebt / totalStockEquity).toFixed(2)*1;
+    }
+
+    //InterestRatepct
+    if (interestExpense && longTermDebt && (isLastYear || !isAnnual)) {
+      InterestRatepct = (interestExpense / longTermDebt).toFixed(2)*1;
+    }
+
+    //roce
+    if (totalAssets && currentLiabilities && (isLastYear || !isAnnual)) {
+      let ebit = isAnnual ? (ebitda - DA) : (ebitda - DA)*4
+      Roce = (ebit / (totalAssets - currentLiabilities)).toFixed(2)*1;
+    }
+
+    result.push({
+      ...data,
+      Mcap,
+      Ncavpsppct,
+      Ncavpsppct_fixed,
+      Roepct,
+      Roce,
+      Pe,
+      Depct,
+      InterestRatepct,
+    });
   }
-
-  //ncavpsppct_fixed (includes fixed assets, adjusted)
-  if (currentAssets && totalAssets && totalLiabilities && shares && price) {
-    const ltAssets = totalAssets - currentAssets;
-    const adjAssets = currentAssets + 0.33 * ltAssets;
-    ncavpsppct_fixed = (
-      (adjAssets - totalLiabilities) /
-      shares /
-      price
-    ).toFixed(2);
-  }
-
-  //MCap
-  if (price && shares) {
-    mcap = (price * shares).toFixed(1);
-  }
-
-  //roepct
-  if (totalStockEquity && netIncome) {
-    roepct = ((netIncome * 4) / totalStockEquity).toFixed(2);
-  }
-
-  //pe
-  if (mcap && netIncome) {
-    pe = (mcap / (netIncome * 4)).toFixed(2);
-  }
-
-  //de (procentual)
-  if (totalLiabilities && totalStockEquity) {
-    depct = (totalLiabilities / totalStockEquity).toFixed(2);
-  }
-
-  //interestRatepct
-  if (interestExpense && longtermLiabilities) {
-    interestRatepct = ((interestExpense * 4) / longtermLiabilities).toFixed(2);
-  }
-
-  //roce
-  if (totalAssets && currentLiabilities) {
-    roce = (((ebitda - DA) * 4) / (totalAssets - currentLiabilities)).toFixed(
-      2
-    );
-  }
-
-  data = {
-    ...data,
-    mcap,
-    ncavpsppct,
-    ncavpsppct_fixed,
-    roepct,
-    roce,
-    pe,
-    depct,
-    interestRatepct,
-  };
-  return data;
+  return result;
 }
 module.exports = compute;

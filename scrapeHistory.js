@@ -39,8 +39,8 @@ try {
               else value = value.replace(",", "") * 1;
             }
             if(financial.nodeName != "#text"){
-              let year = columns[internalIdx+idx];
-              data[year]={...data[year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
+              let Year = columns[internalIdx+idx];
+              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -48,7 +48,7 @@ try {
       })
       Object.keys(data).map(yr=>{
         if(yr == 'undefined')return;
-        formattedData.push({...data[yr],...{year:yr}})
+        formattedData.push({...data[yr],...{Year:yr}})
       })
       return formattedData;
     }
@@ -97,8 +97,8 @@ try {
               else value = value.replace(",", "") * 1;
             }
             if(financial.nodeName != "#text"){
-              let year = columns[internalIdx+idx];
-              data[year]={...data[year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
+              let Year = columns[internalIdx+idx];
+              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -106,7 +106,7 @@ try {
       })
       Object.keys(data).map(yr=>{
         if(yr == 'undefined')return;
-        formattedData.push({...data[yr],...{year:yr}})
+        formattedData.push({...data[yr],...{Year:yr}})
       })
       return formattedData;
     }
@@ -149,8 +149,8 @@ try {
               else value = value.replace(",", "") * 1;
             }
             if(financial.nodeName != "#text"){
-              let year = columns[internalIdx+idx];
-              data[year]={...data[year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
+              let Year = columns[internalIdx+idx];
+              data[Year]={...data[Year],...{[tr.childNodes[1].textContent.replace(/[.,&\-)(' ]/g,'').replaceAll('/','Sl')]:value}}
               internalIdx--;
             }
           });
@@ -158,7 +158,7 @@ try {
       })
       Object.keys(data).map(yr=>{
         if(yr == 'undefined')return;
-        formattedData.push({...data[yr],...{year:yr}})
+        formattedData.push({...data[yr],...{Year:yr}})
       })
       return formattedData;
     }
