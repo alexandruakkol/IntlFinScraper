@@ -137,4 +137,4 @@ async function scrapeLatest(Symbol, page) {
   }
 }
 
-module.exports = { scrapeLatest };
+module.exports = scrapeLatest ;

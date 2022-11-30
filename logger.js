@@ -15,4 +15,4 @@ const logLevels = {
     })],
   });
 
-module.exports={ tempLog }
+module.exports = tempLog 

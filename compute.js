@@ -1,4 +1,4 @@
-const {getHistPrice} = require('./histPrices');
+const getHistPrice = require('./histPrices');
 async function InitCompute(allData) {
   let result=[];
 
@@ -9,18 +9,18 @@ async function InitCompute(allData) {
     return await runCompute(allData, maxYear)
   } catch (err) {console.log('compute error', err); return 'error'}
 
-async function runCompute(allData, maxYear){
-  for(data of allData){
-    let isAnnual = false;
-    if(data.Timeframe=='A')isAnnual=true;
-    if((data.Year != maxYear) && isAnnual){
-      data['Price'] = await getHistPrice(data.Symbol, data.Year)  //pull historical prices for calulation
+  async function runCompute(allData, maxYear){
+    for(data of allData){
+      let isAnnual = false;
+      if(data.Timeframe=='A')isAnnual=true;
+      if((data.Year != maxYear) && isAnnual){
+        data['Price'] = await getHistPrice(data.Symbol, data.Year)  //pull historical prices for calulation
+      }
+      let acc = compute(data, isAnnual);
+      result.push(acc);
     }
-    let acc = compute(data, isAnnual);
-    result.push(acc);
+    return result;
   }
-  return result;
-}
 
   function compute(data, isAnnual){
     let Mcap = null,

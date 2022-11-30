@@ -194,4 +194,4 @@ try {
    }
 }
 
-module.exports = { scrapeHistory }
+module.exports = scrapeHistory 

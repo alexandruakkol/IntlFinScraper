@@ -2,8 +2,8 @@ const puppeteer = require("puppeteer"),
     InitCompute = require("./compute"),
     { insertCluster, getTickers } = require("./postgres"),
     getBaseTickers = require("./getAllUSTickers"),
-    {scrapeLatest} = require("./scrapeLatest"),
-    {scrapeHistory} = require('./scrapeHistory');
+    scrapeLatest = require("./scrapeLatest"),
+    scrapeHistory = require('./scrapeHistory');
 
 function structureData(data, checkIntegrity=false){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){

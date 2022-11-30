@@ -9,4 +9,4 @@ async function getHistPrice(symbol,atEndOfYear){
         return null
     }
 }
-module.exports={getHistPrice}
+module.exports = getHistPrice

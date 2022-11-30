@@ -1,7 +1,6 @@
 const { Client } = require("pg"),
   getBaseTickers = require("./getAllUSTickers"),
-  {tempLog}  = require("./logger");
-const { createLogger } = require("winston");
+  tempLog = require("./logger");
 require("dotenv").config();
 mode = "APPEND-ONLY"; // APPEND-ONLY | OVERWRITE
 debug = false;
