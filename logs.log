@@ -1,23 +1,15 @@
-{"level":"error","message":"AA DB insert error: error: column \"workinprogress\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AACG DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AACI DB insert error: error: column \"prepaidexpenses\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AACIW DB insert error: error: column \"prepaidexpenses\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AADI DB insert error: error: column \"shortterminvestments\" of relation \"findata\" does not exist"}
+{"level":"newColumn","message":"A longtermnotereceivable added to DB"}
+{"level":"newColumn","message":"A capitalexpendituresotherassets added to DB"}
+{"level":"newColumn","message":"A miscellaneousfunds added to DB"}
+{"level":"newColumn","message":"A otheroperatingexpense added to DB"}
+{"level":"newColumn","message":"AACG equityinaffiliates added to DB"}
+{"level":"newColumn","message":"AACG otheraftertaxincomeexpense added to DB"}
+{"level":"newColumn","message":"AACG extraitemsgainsllosssaleofassets added to DB"}
+{"level":"newColumn","message":"AACG discontinuedoperations added to DB"}
+{"level":"newColumn","message":"AACG treasurystock added to DB"}
+{"level":"newColumn","message":"AADI preferredstockcarryingvalue added to DB"}
+{"level":"newColumn","message":"AADI redeemablepreferredstock added to DB"}
 {"level":"error","message":"AAIC DB insert error: error: syntax error at or near \";\""}
 {"level":"error","message":"AAIN DB insert error: error: syntax error at or near \";\""}
-{"level":"error","message":"AAL DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAMC DB insert error: error: syntax error at or near \";\""}
-{"level":"error","message":"AAME DB insert error: error: column \"cashgrowth\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAOI DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAP DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAQC DB insert error: error: column \"prepaidexpenses\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAT DB insert error: error: syntax error at or near \";\""}
-{"level":"error","message":"AATC DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAU DB insert error: error: column \"prepaidexpenses\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AAWW DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"AB DB insert error: error: syntax error at or near \";\""}
-{"level":"error","message":"ABB DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"ABBV DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"ABC DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"ABCM DB insert error: error: column \"baddebtsldoubtfulaccounts\" of relation \"findata\" does not exist"}
-{"level":"error","message":"ABEO DB insert error: error: column \"constructioninprogress\" of relation \"findata\" does not exist"}
+{"level":"newColumn","message":"AAL baddebtovrdoubtfulaccounts added to DB"}
+{"level":"newColumn","message":"AAL unrealizedgainovrlossmarketablesecurities added to DB"}

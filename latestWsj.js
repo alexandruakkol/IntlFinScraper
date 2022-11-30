@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer"),
     compute = require("./compute"),
-    { insertRow, getTickers } = require("./postgres"),
+    { insertCluster, getTickers } = require("./postgres"),
     getBaseTickers = require("./getAllUSTickers"),
     {scrapeLatest} = require("./scrapeLatest"),
     {scrapeHistory} = require('./scrapeHistory'),
@@ -75,17 +75,17 @@ makeBrowser().then(async (init) => {
       } catch(err) {
         tryCounter++;
         debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
-        if (tryCounter == 5) {console.log(`--${Symbol} total scraping fail`); allData='error'}
+        if (tryCounter == 5) {console.log(`--${Symbol} total scraping fail`); allData = 'error'}
       } 
     }
     if (allData != "error" && latest !='error') {
         allData = structureData(allData);
         allData.push({...latest,Symbol:Symbol});
         try { 
-          allData = compute(allData) } catch(err){ console.log('compute error', err); allData='error'; 
+          allData = compute(allData) } catch(err){ console.log('compute error', err); allData = 'error'; 
         } 
         //insert into DB
-        if (allData != "error") insertRow(allData, Symbol) 
+        if (allData != "error") insertCluster(allData, Symbol) 
     } 
   }
   init.browser.close();
