@@ -1,10 +1,9 @@
 const puppeteer = require("puppeteer"),
-    compute = require("./compute"),
+    InitCompute = require("./compute"),
     { insertCluster, getTickers } = require("./postgres"),
     getBaseTickers = require("./getAllUSTickers"),
     {scrapeLatest} = require("./scrapeLatest"),
-    {scrapeHistory} = require('./scrapeHistory'),
-    {tempLog}  = require("./logger");
+    {scrapeHistory} = require('./scrapeHistory');
 const { createLogger } = require("winston");
 
 function structureData(data, checkIntegrity=false){
@@ -65,7 +64,7 @@ makeBrowser().then(async (init) => {
   for (Symbol of data.tickers) {
     console.log(Symbol)
     let tryCounter = 1, latest, allData;
-    while (tryCounter < 5) {
+    while (tryCounter < 3) {
       try {
         latest = await scrapeLatest(Symbol, init.page);
         allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
@@ -75,17 +74,15 @@ makeBrowser().then(async (init) => {
       } catch(err) {
         tryCounter++;
         debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
-        if (tryCounter == 5) {console.log(`--${Symbol} total scraping fail`); allData = 'error'}
+        if (tryCounter == 3) {console.log(`--${Symbol} total scraping fail`); allData = 'error'}
       } 
     }
     if (allData != "error" && latest !='error') {
         allData = structureData(allData);
         allData.push({...latest,Symbol:Symbol});
-        try { 
-          allData = compute(allData) } catch(err){ console.log('compute error', err); allData = 'error'; 
-        } 
-        //insert into DB
-        if (allData != "error") insertCluster(allData, Symbol) 
+        allData = InitCompute(allData).then(res=>{ // DB insert
+          if (res != "error") insertCluster(res, Symbol) 
+        })
     } 
   }
   init.browser.close();

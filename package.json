@@ -6,7 +6,8 @@
     "pg": "^8.8.0",
     "pgtools": "^0.3.2",
     "puppeteer": "^15.1.1",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "yahoo-finance": "^0.3.7"
   },
   "scripts": {
     "pg:init": "pg_ctl init -D data",
