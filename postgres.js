@@ -1,9 +1,9 @@
-const { CURSOR_FLAGS } = require("mongodb");
 const { Client } = require("pg"),
-  getBaseTickers = require("./getAllUSTickers");
+  getBaseTickers = require("./getAllUSTickers"),
+  {tempLog}  = require("./logger");
 require("dotenv").config();
 mode = "OVERWRITE";
-debug = true;
+debug = false;
 const { user, host, database, password, port } = process.env;
 const client = new Client({
   user,
@@ -32,6 +32,7 @@ function v2arr(arr) {
 async function getTickers() {
   existingSymbols = [];
   client.query(`SELECT symbol from data`, (err, res) => {
+    if(err){tempLog.error(`DB select error: ${err}`);return}
     existingSymbols = v2arr(res.rows);
   });
   const baseTickers = await getBaseTickers();
@@ -45,17 +46,16 @@ function stringify(arr){
   return JSON.stringify(arr).replaceAll('[','').replaceAll(']','')
 }
 
-function insertRow(data) {
-  //console.log(`INSERT INTO data(${keys}) values(${values})`);
-  let query = 'BEGIN; ';
+async function insertRow(data, Symbol) {
+  let query = '';
   for(cluster of data){
     let keys = stringify(Object.keys(cluster)).replaceAll('"',``), values = stringify(Object.values(cluster)).replaceAll('"',`'`);
     query += `INSERT INTO findata (${keys}) values (${values}); `;
   }
-  console.log(query)
-  client.query(query + ';COMMIT', (err, _) => {
-    if(err) console.log("db insert error ", err);
-  });
+  try {
+    await client.query(query);
+    console.log(`${Symbol} ok`)
+  } catch (err) { tempLog.error(`${Symbol} DB insert error: ${err}`) }
 }
 
 module.exports = { insertRow, getTickers };

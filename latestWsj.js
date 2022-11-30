@@ -1,12 +1,13 @@
 const puppeteer = require("puppeteer"),
-      compute = require("./compute"),
+    compute = require("./compute"),
     { insertRow, getTickers } = require("./postgres"),
-      getBaseTickers = require("./getAllUSTickers"),
-    { scrapeLatest } = require("./scrapeLatest"),
-    { scrapeHistory } = require('./scrapeHistory')
+    getBaseTickers = require("./getAllUSTickers"),
+    {scrapeLatest} = require("./scrapeLatest"),
+    {scrapeHistory} = require('./scrapeHistory'),
+    {tempLog}  = require("./logger");
+const { createLogger } = require("winston");
 
 function structureData(data, checkIntegrity=false){
-  //if(!Object.keys(data).length)throw 'Data integrity fail, no data!'
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
     if(checkIntegrity){
       Array.from(arguments).forEach(arg=>{
@@ -37,8 +38,7 @@ async function makeBrowser() {
 
 makeBrowser().then(async (init) => {
   //mode logic
-  let data = {},
-    operationStatus;
+  let data = {}
   switch (mode) {
     case "APPEND-ONLY":
       data = await getTickers();
@@ -62,9 +62,10 @@ makeBrowser().then(async (init) => {
   }
 
   //start scraping
-  for (Symbol of data.tickers) {Symbol='AAPL'
+  for (Symbol of data.tickers) {
+    console.log(Symbol)
     let tryCounter = 1, latest, allData;
-    while (tryCounter < 4) {
+    while (tryCounter < 5) {
       try {
         latest = await scrapeLatest(Symbol, init.page);
         allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
@@ -74,7 +75,7 @@ makeBrowser().then(async (init) => {
       } catch(err) {
         tryCounter++;
         debug ? console.log(`--${Symbol} scraping fail: try #${tryCounter}`) : null;
-        if (tryCounter == 4) {console.log(`--${Symbol} total scraping fail`); allData='error'}
+        if (tryCounter == 5) {console.log(`--${Symbol} total scraping fail`); allData='error'}
       } 
     }
     if (allData != "error" && latest !='error') {
@@ -84,13 +85,7 @@ makeBrowser().then(async (init) => {
           allData = compute(allData) } catch(err){ console.log('compute error', err); allData='error'; 
         } 
         //insert into DB
-        if (allData != "error") 
-        try { 
-          insertRow(allData) 
-          console.log(Symbol, 'ok');
-        } catch (err) {
-          console.log(`${Symbol} DB insert error: ${err}`);
-        }
+        if (allData != "error") insertRow(allData, Symbol) 
     } 
   }
   init.browser.close();
