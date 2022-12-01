@@ -82,4 +82,18 @@ async function insertCluster(data, Symbol) {
   }
 }
 
-module.exports = { insertCluster, getTickers };
+async function insertSymbols(data) {
+  let query = `INSERT INTO tickers (symbol, sector, link, scrapeDate) VALUES `;
+  for(cluster of data){
+    query+= `('${cluster.symbol}', '${cluster.sector}', '${cluster.link}', NOW()),`
+  }
+  query = query.slice(0,-1)
+  try {
+    await client.query(query);
+    console.log(`Inserted new symbol cluster`)
+  } catch (err) { 
+    console.log('DB insert new symbol error', err)
+  }
+}
+
+module.exports = { insertCluster, getTickers, insertSymbols };
