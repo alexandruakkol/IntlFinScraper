@@ -82,7 +82,7 @@ async function insertCluster(data, Symbol) {
   }
 }
 
-async function insertSymbols(data) {
+async function insertSymbols(data, category, pageComponent) {
   let query = `INSERT INTO tickers (symbol, sector, link, scrapeDate) VALUES `;
   for(cluster of data){
     query+= `('${cluster.symbol}', '${cluster.sector}', '${cluster.link}', NOW()),`
@@ -90,7 +90,7 @@ async function insertSymbols(data) {
   query = query.slice(0,-1)
   try {
     await client.query(query);
-    console.log(`Inserted new symbol cluster`)
+    console.log(`Inserted symbol for ${category} pg.${pageComponent}`)
   } catch (err) { 
     console.log('DB insert new symbol error', err)
   }

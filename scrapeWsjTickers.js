@@ -26,7 +26,7 @@ async function scrapeTickers(page) {
                 return result;
             })
             if(pageDB=='exit') break;   //break out of page loop if page does not exist
-            insertSymbols(pageDB);  //DB insert
+            insertSymbols(pageDB, category, pageComponent);  //DB insert
             pageCounter++;
         }//END page loop 
     }//END letter loop
