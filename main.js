@@ -1,9 +1,10 @@
 const puppeteer = require("puppeteer"),
     InitCompute = require("./compute"),
-    { insertCluster, getTickers } = require("./postgres"),
-    getBaseTickers = require("./getAllUSTickers"),
+    { insertCluster, getMarginalUSTickers } = require("./postgres"),
+    getUSTickers = require("./getAllUSTickers"),
     scrapeLatest = require("./scrapeLatest"),
-    scrapeHistory = require('./scrapeHistory');
+    scrapeHistory = require('./scrapeHistory'),
+    scrapeTickers = require('./scrapeWsjTickers');
 
 function structureData(data, checkIntegrity=false){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
@@ -39,12 +40,12 @@ makeBrowser().then(async (init) => {
   let data = {};
   switch (mode) {
     case "APPEND-ONLY":
-      data = await getTickers();
+      data = await getMarginalUSTickers(init.page);
       var noSymbolsYetToPull = data.tickers.length;
       console.log(`${mode} mode. Pulling ${noSymbolsYetToPull} of ${data.baseCounter} total symbols.`);
       break;
     case "OVERWRITE":
-      data.tickers = await getBaseTickers();
+      data.tickers = await getUSTickers();
       console.log(mode, "mode.", "Pulling", data.tickers.length, "symbols.");
       break;
     default:

@@ -1,5 +1,5 @@
 const { Client } = require("pg"),
-  getBaseTickers = require("./getAllUSTickers"),
+  getUSTickers = require("./getAllUSTickers"),
   tempLog = require("./logger");
 require("dotenv").config();
 mode = "APPEND-ONLY"; // APPEND-ONLY | OVERWRITE
@@ -29,13 +29,13 @@ function v2arr(arr) {
   return arrval;
 }
 
-async function getTickers() {
+async function getMarginalUSTickers() {
   existingSymbols = [];
   try {
     const res = await client.query(`SELECT symbol from ${table}`)
     existingSymbols = v2arr(res.rows);
   } catch (err) {tempLog.error(`DB select error: ${err}`)}
-  const baseTickers = await getBaseTickers();
+  const baseTickers = await getUSTickers();
   return {
     tickers: baseTickers.filter((t) => !existingSymbols.includes(t)),
     baseCounter: baseTickers.length,
@@ -96,4 +96,4 @@ async function insertSymbols(data, category, pageComponent) {
   }
 }
 
-module.exports = { insertCluster, getTickers, insertSymbols };
+module.exports = { insertCluster, getMarginalUSTickers, insertSymbols };

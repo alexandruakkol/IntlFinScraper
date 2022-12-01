@@ -1,6 +1,6 @@
 const fetch = require("node-fetch"), fs=require('fs')
 const blacklist = getBlacklist();
-async function getBaseTickers() {
+async function getUSTickers() {
   var out = undefined;
   await fetch(
     "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/main/all/all_tickers.txt"
@@ -20,4 +20,4 @@ function getBlacklist(){
   return result;
 }
 
-module.exports = getBaseTickers;
+module.exports = getUSTickers;
