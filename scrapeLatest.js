@@ -1,8 +1,8 @@
-async function scrapeLatest(Symbol, page) {
+async function scrapeLatest(Symbol, Link, page) {
 
-  let balanceSheetURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/quarter/balance-sheet`;
-  let incomeStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/quarter/income-statement`;
-  let cashflowStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/quarter/cash-flow`;
+  let balanceSheetURL = global.appdata.baseLink+Link + 'financials/quarter/balance-sheet/';
+  let incomeStatementURL = global.appdata.baseLink+Link + `financials/quarter/income-statement`;
+  let cashflowStatementURL = global.appdata.baseLink+Link + `financials/quarter/cash-flow`;
 
   try {
     ////////Balance sheet\\\\\\\\

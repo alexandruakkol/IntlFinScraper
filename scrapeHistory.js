@@ -1,8 +1,8 @@
-async function scrapeHistory(Symbol, page) {
+async function scrapeHistory(Symbol, Link, page) {
 
-let balanceSheetURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/balance-sheet`;
-let incomeStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/income-statement`;
-let cashflowStatementURL = `https://www.wsj.com/market-data/quotes/${Symbol}/financials/annual/cash-flow`;
+let balanceSheetURL = global.appdata.baseLink + Link + `financials/annual/balance-sheet`;
+let incomeStatementURL = global.appdata.baseLink + Link `financials/annual/income-statement`;
+let cashflowStatementURL = global.appdata.baseLink + Link + `financials/annual/cash-flow`;
 
 try {
   ////////Balance sheet\\\\\\\

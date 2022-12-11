@@ -29,6 +29,15 @@ function v2arr(arr) {
   return arrval;
 }
 
+async function getExistingSymbols(){
+  existingSymbols = [];
+  try {
+    const res = await client.query(`SELECT distinct symbol from ${table}`)
+    existingSymbols = v2arr(res.rows);
+  } catch (err) {tempLog.error(`DB select error: ${err}`)}
+  return existingSymbols;
+}
+
 async function getMarginalUSTickers() {
   existingSymbols = [];
   try {
@@ -96,4 +105,18 @@ async function insertSymbols(data, category, pageComponent) {
   }
 }
 
-module.exports = { insertCluster, getMarginalUSTickers, insertSymbols };
+async function getGlobalInitData(){ //gets what to actually scrape: symbols, their links, sector
+  //TODO: remove limit
+  let query = 'SELECT "Symbol", "Link", "Sector" from tickers';
+  let symbols;
+  try {
+    symbols = await client.query(query);
+    console.log(`Pulled init data`);
+  } catch (err) { 
+    console.log('Init data pull error', err)
+  }
+  return symbols.rows;
+}
+// getGlobalInitData().then(r=>console.log(r));
+// getExistingSymbols().then(r=>console.log(r))
+module.exports = { insertCluster, getMarginalUSTickers, insertSymbols, getGlobalInitData, getExistingSymbols};

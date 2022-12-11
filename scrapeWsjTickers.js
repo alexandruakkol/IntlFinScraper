@@ -18,7 +18,7 @@ async function scrapeTickers(page) {
                         let firstTD =rowData[1]; //extract the link
                         let link = Array.from(firstTD.childNodes)[0].href; 
                         let symbol = link.split('/')[link.split('/').length-1]; 
-                        link = link.replace('https://www.wsj.com/market-data/quotes/','');
+                        link = link.replace(global.appdata.baseLink,'');
                         let sector = rowData[7].textContent;
                         result.push({symbol, link, sector})
                     }

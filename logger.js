@@ -7,12 +7,12 @@ const logLevels = {
     error: 3,
   };
    
-  const tempLog = createLogger({
-    levels: logLevels,
-    transports: [new transports.File({
-        filename: 'logs.log',
-        level:'error'
-    })],
-  });
+const tempLog = createLogger({
+  levels: logLevels,
+  transports: [new transports.File({
+      filename: 'logs.log',
+      level:'error'
+  })],
+});
 
 module.exports = tempLog 

@@ -1,10 +1,15 @@
 const puppeteer = require("puppeteer"),
     InitCompute = require("./compute"),
-    { insertCluster, getMarginalUSTickers } = require("./postgres"),
+    { insertCluster, getExistingSymbols, getGlobalInitData } = require("./postgres"),
     getUSTickers = require("./getAllUSTickers"),
     scrapeLatest = require("./scrapeLatest"),
     scrapeHistory = require('./scrapeHistory'),
-    scrapeTickers = require('./scrapeWsjTickers');
+    scrapeTickers = require('./scrapeWsjTickers');  //used to fill 'tickers' table with all global tickers 
+    //..to be run just once in a while
+
+//global init
+global.appdata = { baseLink : 'https://www.wsj.com/market-data/quotes/'};
+//end global init
 
 function structureData(data, checkIntegrity=false){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
@@ -37,16 +42,19 @@ async function makeBrowser() {
 
 makeBrowser().then(async (init) => {
   //mode logic
-  let data = {};
+  let data, existingSymbols, dataToScrape=[];
   switch (mode) {
     case "APPEND-ONLY":
-      data = await getMarginalUSTickers(init.page);
-      var noSymbolsYetToPull = data.tickers.length;
-      console.log(`${mode} mode. Pulling ${noSymbolsYetToPull} of ${data.baseCounter} total symbols.`);
+      //data = await getMarginalUSTickers(init.page);
+      data = await getGlobalInitData();
+      existingSymbols = await getExistingSymbols();
+      data.forEach(d=>{if(!existingSymbols.includes(d.symbol))dataToScrape.push(d)});
+      var noSymbolsYetToPull = existingSymbols.length;
+      console.log(`${mode} mode. Pulling ${noSymbolsYetToPull} of ${data.length} total symbols.`);
       break;
     case "OVERWRITE":
-      data.tickers = await getUSTickers();
-      console.log(mode, "mode.", "Pulling", data.tickers.length, "symbols.");
+      dataToScrape = await getGlobalInitData();
+      console.log(mode, "mode.", "Pulling", dataToScrape.length, "symbols.");
       break;
     default:
       console.log("Wrong mode.");
@@ -54,13 +62,14 @@ makeBrowser().then(async (init) => {
   }
 
   //start scraping
-  for (Symbol of data.tickers) {
-    console.log(`${Symbol} | ${((1-(noSymbolsYetToPull/data.baseCounter))*100).toFixed(2)}% done`)
+  for (SymbolCluster of dataToScrape) {
+    const {Symbol, Link, Sector} = SymbolCluster; 
+    console.log(`${Symbol} | ${((1-(noSymbolsYetToPull/data.length))*100).toFixed(2)}% done`)
     let tryCounter = 1, latest, allData;
     while (tryCounter < 3) {
       try {
-        latest = await scrapeLatest(Symbol, init.page);
-        allData = await scrapeHistory(Symbol, init.page);  //this returns scraped, unjoined data
+        latest = await scrapeLatest(Symbol, Link, init.page);
+        allData = await scrapeHistory(Symbol, Link, init.page);  //this returns scraped, unjoined data
         if(latest.error || allData.error) throw 'PageDown error'
         structureData(allData, true)  //check data integrity
         break;
