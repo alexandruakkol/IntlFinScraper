@@ -1,17 +1,17 @@
 const puppeteer = require("puppeteer"),
     InitCompute = require("./compute"),
     { insertCluster, getExistingSymbols, getGlobalInitData } = require("./postgres"),
-    getUSTickers = require("./getAllUSTickers"),
+    //getUSTickers = require("./getAllUSTickers"),
     scrapeLatest = require("./scrapeLatest"),
     scrapeHistory = require('./scrapeHistory'),
-    scrapeTickers = require('./scrapeWsjTickers');  //used to fill 'tickers' table with all global tickers 
+    scrapeTickers = require('./scrapeWsjTickers');  //used to fill tickersxw table with all global tickers 
     //..to be run just once in a while
 
 //global init
 global.appdata = { baseLink : 'https://www.wsj.com/market-data/quotes/'};
 //end global init
 
-function structureData(data, checkIntegrity=false){
+function structureData(data, checkIntegrity=false, Symbol=null){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
     if(checkIntegrity){
       Array.from(arguments).forEach(arg=>{
@@ -26,7 +26,7 @@ function structureData(data, checkIntegrity=false){
       let arr4SameYr = arr4.filter(arr4PerYr=>arr4PerYr.Year==arr1PerYr.Year)[0];
       let arr5SameYr = arr5.filter(arr5PerYr=>arr5PerYr.Year==arr1PerYr.Year)[0];
       let arr6SameYr = arr6.filter(arr6PerYr=>arr6PerYr.Year==arr1PerYr.Year)[0];
-      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, Currency:data.Currency, Denom:data.Denom, Price:data.Price, Symbol:Symbol, Timeframe:data.Timeframe, ScrapeDate:data.ScrapeDate});
+      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, Currency:data.Currency, Denom:data.Denom, Price:data.Price, Symbol, Timeframe:data.Timeframe, ScrapeDate:data.ScrapeDate});
     })
     return arrFin;
   }
@@ -48,8 +48,8 @@ makeBrowser().then(async (init) => {
       //data = await getMarginalUSTickers(init.page);
       data = await getGlobalInitData();
       existingSymbols = await getExistingSymbols();
-      data.forEach(d=>{if(!existingSymbols.includes(d.symbol))dataToScrape.push(d)});
-      var noSymbolsYetToPull = existingSymbols.length;
+      data.forEach(d=>{if(!existingSymbols.includes(d.Symbol)) dataToScrape.push(d)});
+      var noSymbolsYetToPull = dataToScrape.length;
       console.log(`${mode} mode. Pulling ${noSymbolsYetToPull} of ${data.length} total symbols.`);
       break;
     case "OVERWRITE":
@@ -63,7 +63,7 @@ makeBrowser().then(async (init) => {
 
   //start scraping
   for (SymbolCluster of dataToScrape) {
-    const {Symbol, Link, Sector} = SymbolCluster; 
+    const {Symbol, Link, Sector} = SymbolCluster;
     console.log(`${Symbol} | ${((1-(noSymbolsYetToPull/data.length))*100).toFixed(2)}% done`)
     let tryCounter = 1, latest, allData;
     while (tryCounter < 3) {
@@ -80,10 +80,10 @@ makeBrowser().then(async (init) => {
       } 
     }
     if (allData != "error" && latest !='error') {
-        allData = structureData(allData);
-        allData.push({...latest,Symbol:Symbol});
+        allData = structureData(allData, false, Symbol);
+        allData.push({...latest, Symbol});
         allData = InitCompute(allData).then(res=>{ // DB insert
-          if (res != "error") insertCluster(res, Symbol) 
+          if (res != "error") insertCluster(res, Symbol)
         })
     } 
     noSymbolsYetToPull--;

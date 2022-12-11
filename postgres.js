@@ -30,7 +30,7 @@ function v2arr(arr) {
 }
 
 async function getExistingSymbols(){
-  existingSymbols = [];
+  let existingSymbols = [];
   try {
     const res = await client.query(`SELECT distinct symbol from ${table}`)
     existingSymbols = v2arr(res.rows);
@@ -39,7 +39,7 @@ async function getExistingSymbols(){
 }
 
 async function getMarginalUSTickers() {
-  existingSymbols = [];
+  let existingSymbols = [];
   try {
     const res = await client.query(`SELECT symbol from ${table}`)
     existingSymbols = v2arr(res.rows);
@@ -117,6 +117,4 @@ async function getGlobalInitData(){ //gets what to actually scrape: symbols, the
   }
   return symbols.rows;
 }
-// getGlobalInitData().then(r=>console.log(r));
-// getExistingSymbols().then(r=>console.log(r))
 module.exports = { insertCluster, getMarginalUSTickers, insertSymbols, getGlobalInitData, getExistingSymbols};
