@@ -77,8 +77,7 @@ async function insertCluster(data, Symbol) {
     else tempLog.error(`${Symbol} DB insert error: ${err} ${Main.query}`)
   }
 
-  async function handleMissingColumn(err, match1, match2, Main){
-    //auto-add new columns to DB
+  async function handleMissingColumn(err, match1, match2, Main){ //add missing columns to table (as they appear)
     let newColumnName = err.replace(match1,'').replace(match2,''); 
     let query = `ALTER TABLE ${table} ADD ${newColumnName} float(1)`;
     try {

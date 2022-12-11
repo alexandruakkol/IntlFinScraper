@@ -11,7 +11,7 @@ const puppeteer = require("puppeteer"),
 global.appdata = { baseLink : 'https://www.wsj.com/market-data/quotes/'};
 //end global init
 
-function structureData(data, checkIntegrity=false, Symbol=null){
+function structureData(data, checkIntegrity=false){
   function joinByYear(arr1,arr2,arr3,arr4,arr5,arr6){
     if(checkIntegrity){
       Array.from(arguments).forEach(arg=>{
@@ -26,7 +26,7 @@ function structureData(data, checkIntegrity=false, Symbol=null){
       let arr4SameYr = arr4.filter(arr4PerYr=>arr4PerYr.Year==arr1PerYr.Year)[0];
       let arr5SameYr = arr5.filter(arr5PerYr=>arr5PerYr.Year==arr1PerYr.Year)[0];
       let arr6SameYr = arr6.filter(arr6PerYr=>arr6PerYr.Year==arr1PerYr.Year)[0];
-      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, Currency:data.Currency, Denom:data.Denom, Price:data.Price, Symbol, Timeframe:data.Timeframe, ScrapeDate:data.ScrapeDate});
+      arrFin.push({...arr1PerYr,...arr2SameYr,...arr3SameYr,...arr4SameYr,...arr5SameYr,...arr6SameYr, Currency:data.Currency, Denom:data.Denom, Price:data.Price, Symbol:data.Symbol, Sector:data.Sector, Timeframe:data.Timeframe, ScrapeDate:data.ScrapeDate});
     })
     return arrFin;
   }
@@ -80,7 +80,8 @@ makeBrowser().then(async (init) => {
       } 
     }
     if (allData != "error" && latest !='error') {
-        allData = structureData(allData, false, Symbol);
+        allData.Symbol=Symbol; allData.Sector = Sector;
+        allData = structureData(allData, false);
         allData.push({...latest, Symbol});
         allData = InitCompute(allData).then(res=>{ // DB insert
           if (res != "error") insertCluster(res, Symbol)
